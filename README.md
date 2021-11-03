@@ -5,4 +5,4 @@
 - Visual Studio 2019+
 - Sony PS3 4.75+ SDK w/ Visual Studio Integration
 
-![Preview](https://github.com/TheRouletteBoi/PowerObfuscator/blob/master/Resources/Preview.png)
+![Preview](https://github.com/TheRouletteBoi/PowerObfuscator/blob/master/Resources/Preview.PNG)
