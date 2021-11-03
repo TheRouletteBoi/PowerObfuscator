@@ -1,0 +1,59 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PowerObfuscator", "PowerObfuscator\src\PowerObfuscator.vcxproj", "{90AF5C15-C22F-4963-8AD1-899B25766C9B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libPowerObfuscator", "libPowerObfuscator\src\libPowerObfuscator.vcxproj", "{71D35301-A6D2-4CE0-855C-BD7AE9D1D91C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PowerObfuscatorSPRX", "PowerObfuscatorSPRX\src\PowerObfuscatorSPRX.vcxproj", "{52D64FD4-79E9-4466-8D01-3B7D6C5383BC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Mixed Platforms = Debug|Mixed Platforms
+		Debug|PS3 = Debug|PS3
+		Debug|x64 = Debug|x64
+		Release|Mixed Platforms = Release|Mixed Platforms
+		Release|PS3 = Release|PS3
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{90AF5C15-C22F-4963-8AD1-899B25766C9B}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{90AF5C15-C22F-4963-8AD1-899B25766C9B}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{90AF5C15-C22F-4963-8AD1-899B25766C9B}.Debug|PS3.ActiveCfg = Debug|x64
+		{90AF5C15-C22F-4963-8AD1-899B25766C9B}.Debug|x64.ActiveCfg = Debug|x64
+		{90AF5C15-C22F-4963-8AD1-899B25766C9B}.Debug|x64.Build.0 = Debug|x64
+		{90AF5C15-C22F-4963-8AD1-899B25766C9B}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{90AF5C15-C22F-4963-8AD1-899B25766C9B}.Release|Mixed Platforms.Build.0 = Release|x64
+		{90AF5C15-C22F-4963-8AD1-899B25766C9B}.Release|PS3.ActiveCfg = Release|x64
+		{90AF5C15-C22F-4963-8AD1-899B25766C9B}.Release|x64.ActiveCfg = Release|x64
+		{90AF5C15-C22F-4963-8AD1-899B25766C9B}.Release|x64.Build.0 = Release|x64
+		{71D35301-A6D2-4CE0-855C-BD7AE9D1D91C}.Debug|Mixed Platforms.ActiveCfg = Debug|PS3
+		{71D35301-A6D2-4CE0-855C-BD7AE9D1D91C}.Debug|Mixed Platforms.Build.0 = Debug|PS3
+		{71D35301-A6D2-4CE0-855C-BD7AE9D1D91C}.Debug|PS3.ActiveCfg = Debug|PS3
+		{71D35301-A6D2-4CE0-855C-BD7AE9D1D91C}.Debug|PS3.Build.0 = Debug|PS3
+		{71D35301-A6D2-4CE0-855C-BD7AE9D1D91C}.Debug|x64.ActiveCfg = Debug|PS3
+		{71D35301-A6D2-4CE0-855C-BD7AE9D1D91C}.Release|Mixed Platforms.ActiveCfg = Release|PS3
+		{71D35301-A6D2-4CE0-855C-BD7AE9D1D91C}.Release|Mixed Platforms.Build.0 = Release|PS3
+		{71D35301-A6D2-4CE0-855C-BD7AE9D1D91C}.Release|PS3.ActiveCfg = Release|PS3
+		{71D35301-A6D2-4CE0-855C-BD7AE9D1D91C}.Release|PS3.Build.0 = Release|PS3
+		{71D35301-A6D2-4CE0-855C-BD7AE9D1D91C}.Release|x64.ActiveCfg = Release|PS3
+		{52D64FD4-79E9-4466-8D01-3B7D6C5383BC}.Debug|Mixed Platforms.ActiveCfg = Debug|PS3
+		{52D64FD4-79E9-4466-8D01-3B7D6C5383BC}.Debug|Mixed Platforms.Build.0 = Debug|PS3
+		{52D64FD4-79E9-4466-8D01-3B7D6C5383BC}.Debug|PS3.ActiveCfg = Debug|PS3
+		{52D64FD4-79E9-4466-8D01-3B7D6C5383BC}.Debug|PS3.Build.0 = Debug|PS3
+		{52D64FD4-79E9-4466-8D01-3B7D6C5383BC}.Debug|x64.ActiveCfg = Debug|PS3
+		{52D64FD4-79E9-4466-8D01-3B7D6C5383BC}.Release|Mixed Platforms.ActiveCfg = Release|PS3
+		{52D64FD4-79E9-4466-8D01-3B7D6C5383BC}.Release|Mixed Platforms.Build.0 = Release|PS3
+		{52D64FD4-79E9-4466-8D01-3B7D6C5383BC}.Release|PS3.ActiveCfg = Release|PS3
+		{52D64FD4-79E9-4466-8D01-3B7D6C5383BC}.Release|PS3.Build.0 = Release|PS3
+		{52D64FD4-79E9-4466-8D01-3B7D6C5383BC}.Release|x64.ActiveCfg = Release|PS3
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AAAE214D-34FF-40B0-BA41-DE755FB56E4E}
+	EndGlobalSection
+EndGlobal
