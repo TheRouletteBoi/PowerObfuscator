@@ -1,32 +1,16 @@
-
-// PowerObfuscator.h : main header file for the PROJECT_NAME application
-//
-
 #pragma once
 
-#ifndef __AFXWIN_H__
-	#error "include 'stdafx.h' before including this file for PCH"
-#endif
+#include <QtWidgets/QMainWindow>
+#include "ui_PowerObfuscator.h"
 
-#include "resource.h"		// main symbols
-
-
-// CPowerObfuscatorApp:
-// See PowerObfuscator.cpp for the implementation of this class
-//
-
-class CPowerObfuscatorApp : public CWinApp
+class PowerObfuscator : public QMainWindow
 {
+    Q_OBJECT
+
 public:
-	CPowerObfuscatorApp();
+    PowerObfuscator(QWidget *parent = nullptr);
+    ~PowerObfuscator();
 
-// Overrides
-public:
-	virtual BOOL InitInstance();
-
-// Implementation
-
-	DECLARE_MESSAGE_MAP()
+private:
+    Ui::PowerObfuscatorClass ui;
 };
-
-extern CPowerObfuscatorApp theApp;

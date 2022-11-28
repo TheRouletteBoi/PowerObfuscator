@@ -63,13 +63,13 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <CppLanguageStd>Cpp11</CppLanguageStd>
-      <AdditionalIncludeDirectories>$(SolutionDir)$(ProjectName)\vendor\PowerObfuscatorAPI\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)vendor\libPowerObfuscator\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateSnMapFile>FullMapFile</GenerateSnMapFile>
       <MapFileName>$(IntDir)$(TargetName).map</MapFileName>
       <AdditionalDependencies>-lPowerObfuscator;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)$(ProjectName)\vendor\PowerObfuscatorAPI\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)vendor\libPowerObfuscator\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <OutputFormat>PRXFile</OutputFormat>
     </Link>
   </ItemDefinitionGroup>
