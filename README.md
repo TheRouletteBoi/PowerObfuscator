@@ -16,7 +16,7 @@ PowerObfuscator obfuscate your PS3 .PRX/.SPRX plugins
 - Sony PS3 4.75+ SDK w/ Visual Studio Integration
 - [Fixed std::string library](https://github.com/skiff/libpsutil/releases "Fixed std::string library")
 - [Qt with MSVC compilers](https://www.qt.io/download-qt-installer)
-- Qt Visual Studio plugins
+- Qt plugins Visual Studio
 
 ![Preview](https://github.com/TheRouletteBoi/PowerObfuscator/blob/master/Assets/Screenshots/Preview.PNG)
 
