@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.3.32901.215
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PowerObfuscator", "PowerObfuscator\src\PowerObfuscator.vcxproj", "{C59C4CDE-CF36-4453-903F-3657B83D95B4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{52D64FD4-79E9-4466-8D01-3B7D6C5383BC} = {52D64FD4-79E9-4466-8D01-3B7D6C5383BC}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libPowerObfuscator", "libPowerObfuscator\src\libPowerObfuscator.vcxproj", "{71D35301-A6D2-4CE0-855C-BD7AE9D1D91C}"
 EndProject
