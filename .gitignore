@@ -7,6 +7,7 @@ build/*
 **/*.log
 **/*.o
 **/*.elf
+**/*.vcxproj.filters
 **/archives/*
 *.sdf
 *.suo

@@ -18,7 +18,7 @@ PowerObfuscator obfuscate your PS3 .PRX/.SPRX plugins
 - [Qt with MSVC compilers](https://www.qt.io/download-qt-installer)
 - Qt Visual Studio plugins
 
-![Preview](https://github.com/TheRouletteBoi/PowerObfuscator/blob/master/Resources/Preview.PNG)
+![Preview](https://github.com/TheRouletteBoi/PowerObfuscator/blob/master/Assets/Screenshots/Preview.PNG)
 
 
 # Credits
