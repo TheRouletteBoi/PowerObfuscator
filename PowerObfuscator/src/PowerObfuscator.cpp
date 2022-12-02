@@ -8,3 +8,4 @@ PowerObfuscator::PowerObfuscator(QWidget *parent)
 
 PowerObfuscator::~PowerObfuscator()
 {}
+     
