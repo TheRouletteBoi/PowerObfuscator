@@ -10,6 +10,13 @@ PowerObfuscator obfuscate your PS3 .PRX/.SPRX plugins
 - Compile time string obfuscation 
 - Compile time random seed/number generator
 - Real time function encryption/decryption
+
+
+# TODO Tutorial
+Add the following items into the tutorial incase user encounters an errors.
+- Add -lc to your project library dependencies because memcpy is used in vxENCRYPT
+- EnstoneStringEncrypt requires you to overrride new and delete operators because it uses std::string. Best to use with libpsutils.h
+
  
 # Prerequisites
 - Visual Studio 2013+

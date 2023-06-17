@@ -68,7 +68,7 @@
     <Link>
       <GenerateSnMapFile>FullMapFile</GenerateSnMapFile>
       <MapFileName>$(IntDir)$(TargetName).map</MapFileName>
-      <AdditionalDependencies>-lPowerObfuscator;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>-lPowerObfuscator;-lc;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)vendor\libPowerObfuscator\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <OutputFormat>PRXFile</OutputFormat>
     </Link>
