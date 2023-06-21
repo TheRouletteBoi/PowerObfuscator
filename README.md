@@ -16,6 +16,8 @@ PowerObfuscator obfuscate your PS3 .PRX/.SPRX plugins
 Add the following items into the tutorial incase user encounters an errors.
 - Add -lc to your project library dependencies because memcpy is used in vxENCRYPT
 - EnstoneStringEncrypt requires you to overrride new and delete operators because it uses std::string. Best to use with libpsutils.h
+- you will need visual studio 2022 to build QT GUI app because extensions don't work with visual studio 2013 
+- QT version used was 6.6.0
 
  
 # Prerequisites
