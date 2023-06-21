@@ -149,9 +149,6 @@ void pobf_AllStringEncryptions_Example()
 
 extern "C" int PowerObfuscatorSPRXMain(int argc, char* argv[])
 {
-    pobf::EncryptV2::DataCompare(nullptr, nullptr, nullptr);
-
-
     inline_encryptFunctionStart((void*)PowerObfuscatorSPRXMain);
 
     int var = pobf::EncryptV1::EXPORTS_TOC[0];
