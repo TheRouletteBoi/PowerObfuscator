@@ -428,6 +428,7 @@ namespace pobf
                 __encryptFunctionEnd(function);
             }
         }
+    }
 
 
 
