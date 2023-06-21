@@ -2,12 +2,8 @@
 #include <sys/prx.h>
 #include <sys/ppu_thread.h>
 #include <sys/timer.h>
+#include <libpsutil.h>
 #include "PowerObfuscatorAPI.h"
-
-extern "C" int _sys_printf(const char* fmt, ...);
-#define printf _sys_printf
-extern "C" int _sys_snprintf(char* buffer, size_t len, const char* fmt, ...);
-#define snprintf _sys_snprintf
 
 SYS_MODULE_INFO( PowerObfuscatorSPRX, 0, 1, 1);
 SYS_MODULE_START( PowerObfuscatorSPRXMain );
@@ -24,6 +20,8 @@ void ThisFuncShouldBeEncrypted003();
 
 void ThisFuncShouldBeEncrypted001()
 {
+    printf("ThisFuncShouldBeEncrypted001\n");
+
     int value = ThisFuncShouldBeEncrypted002(800, 255);
     printf("value: %d\n", value);
 
@@ -45,9 +43,11 @@ void ThisFuncShouldBeEncrypted003()
 
 void MainThread(uint64_t arg)
 {
+    printf("MainThread\n");
+
     ThisFuncShouldBeEncrypted001();
     int value = ThisFuncShouldBeEncrypted002(999, 999);
-    printf("value in thread %D\n", value);
+    printf("value in thread %d\n", value);
 
 
 
@@ -57,6 +57,8 @@ void MainThread(uint64_t arg)
 
 void pobf_CompileTime_RandomInt_Example()
 {
+    printf("pobf_CompileTime_RandomInt_Example\n");
+
     // Bernoulli engine is not fully implemented
     //pobf::MetaRand::CMetaUInt_PrintRandoms<10, typename pobf::MetaRand::Bernoulli<pobf::MetaRand::linear_congruential_engine<uint_fast32_t,3>, 1, 10>>::type >::print();
      
@@ -70,11 +72,11 @@ void pobf_CompileTime_RandomInt_Example()
 
     // Prints the first random number
     typedef pobf::MetaRand::CMetaUInt_Next<X>::type X0;
-    printf("0x%X\n", X0::value);
+    printf("CMetaUInt_Next<X>: 0x%X\n", X0::value);
 
     // Prints the second random number
     typedef pobf::MetaRand::CMetaUInt_Next<X0>::type X1;
-    printf("0x%X\n", X1::value);
+    printf("CMetaUInt_Next<X0>: 0x%X\n", X1::value);
 
     unsigned int randomInt1 = pobf::MetaRand::RandomCompileTimeInteger1::value;
     unsigned int randomInt2 = pobf::MetaRand::RandomCompileTimeInteger2::value;
@@ -91,6 +93,8 @@ void pobf_CompileTime_RandomInt_Example()
 
 void pobf_vxRandom1_Example()
 {
+    printf("pobf_vxRandom1_Example\n");
+
     switch (vxRANDOM(1, 4))
     {
         case 1: { printf("exampleRandom1: Code path 1!\n"); break; }
@@ -104,6 +108,8 @@ void pobf_vxRandom1_Example()
 // A small random code generator example
 void pobf_vxRandom2_Example()
 {
+    printf("pobf_vxRandom2_Example\n");
+
     volatile uint32_t RndVal = vxRANDOM(0, 100);
     if (vxRAND() % 2) { RndVal += vxRANDOM(0, 100); }
     else { RndVal -= vxRANDOM(0, 200); }
@@ -113,22 +119,28 @@ void pobf_vxRandom2_Example()
 // A small string hasing example
 void pobf_vxHashing_Example()
 {
+    printf("pobf_vxHashing_Example\n");
+
     printf("exampleHashing: 0x%08X\n", vxHASH("hello world!"));
     printf("exampleHashing: 0x%08X\n", vxHASH("HELLO WORLD!"));
 }
 
 void pobf_vxStringEncrypt_Example()
 {
+    printf("pobf_vxStringEncrypt_Example\n");
+
     printf("exampleEncryption: %s\n", vxENCRYPT("Hello world!"));
 }
 
 void pobf_AllStringEncryptions_Example()
 {
+    printf("pobf_AllStringEncryptions_Example\n");
+
     printf("ENCRYPTSTRV1 %s\n", ENCRYPTSTRV1("this string will be encrypted using V1"));
 
     printf("ENCRYPTSTRV2 %s\n", ENCRYPTSTRV2("this string will be encrypted using V2"));
 
-    //printf("ENCRYPTSTRV3 %s\n", ENCRYPTSTRV3("this string will be encrypted using V3"));
+    printf("ENCRYPTSTRV3 %s\n", ENCRYPTSTRV3("this string will be encrypted using V3"));
 
 
     // compile time string to hash
@@ -137,13 +149,23 @@ void pobf_AllStringEncryptions_Example()
 
 extern "C" int PowerObfuscatorSPRXMain(int argc, char* argv[])
 {
-    //int var = EXPORTS_TOC[0];
-    //pobf_Start(var);
+    pobf::EncryptV2::DataCompare(nullptr, nullptr, nullptr);
+
+
+    inline_encryptFunctionStart((void*)PowerObfuscatorSPRXMain);
+
+    int var = pobf::EncryptV1::EXPORTS_TOC[0];
+    pobf::EncryptV1::Start(var);
     
 
     sys_ppu_thread_create(&gTestEncryptedThreadId, MainThread, 0, 3000, 8192, SYS_PPU_THREAD_CREATE_JOINABLE, "TestEncryptedThread");
 
     ThisFuncShouldBeEncrypted003();
+
+
+    inline_encryptFunctionEnd();
+    StartPattternThread();
+
     return 0;
 }
 

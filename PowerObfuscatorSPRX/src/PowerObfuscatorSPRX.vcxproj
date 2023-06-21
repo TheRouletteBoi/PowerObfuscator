@@ -68,7 +68,7 @@
     <Link>
       <GenerateSnMapFile>FullMapFile</GenerateSnMapFile>
       <MapFileName>$(IntDir)$(TargetName).map</MapFileName>
-      <AdditionalDependencies>-lPowerObfuscator;-lc;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>-lPowerObfuscator;-lc;$(SCE_PS3_ROOT)\target\ppu\lib\libpsutil.a;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)vendor\libPowerObfuscator\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <OutputFormat>PRXFile</OutputFormat>
     </Link>
@@ -84,7 +84,7 @@
     <Link>
       <MapFileName>$(IntDir)$(TargetName).map</MapFileName>
       <AdditionalLibraryDirectories>$(SolutionDir)vendor\libPowerObfuscator\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>-lPowerObfuscator;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>-lPowerObfuscator;-lc;$(SCE_PS3_ROOT)\target\ppu\lib\libpsutil.a;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFormat>PRXFile</OutputFormat>
       <InfoStripping>StripDebug</InfoStripping>
       <DataStripping>StripFuncsAndData</DataStripping>
