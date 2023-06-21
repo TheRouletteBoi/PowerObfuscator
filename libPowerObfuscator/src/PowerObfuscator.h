@@ -123,28 +123,28 @@ namespace pobf
 
         /******* Patterns to scan for ********/
 #define DefaultPatternStart() \
-            __asm("xor %r3, %r3, %r4"       /* 7C 63 22 78 */    \
-                    "xor %r3, %r3, %r4");   /* 7C 63 22 78 */
+            __asm("xor %r3, %r3, %r4"       /* \x7C\x63\x22\x78 */    \
+                    "xor %r3, %r3, %r4");   /* \x7C\x63\x22\x78 */
 
 #define DefaultPatternEnd() \
-            __asm("xor %r3, %r3, %r5"       /* 7C 63 2A 78 */   \
-                    "xor %r3, %r3, %r5");   /* 7C 63 2A 78 */
+            __asm("xor %r3, %r3, %r5"       /* \x7C\x63\x2A\x78 */   \
+                    "xor %r3, %r3, %r5");   /* \x7C\x63\x2A\x78 */
 
 #define QuickPatternStart() \
-            __asm("xor %r3, %r3, %r6"       /* 7C 63 32 78 */   \
-                    "xor %r3, %r3, %r6");   /* 7C 63 32 78 */
+            __asm("xor %r3, %r3, %r6"       /* \x7C\x63\x32\x78 */   \
+                    "xor %r3, %r3, %r6");   /* \x7C\x63\x32\x78 */
 
 #define QuickPatternEnd() \
-            __asm("xor %r3, %r3, %r7"       /* 7C 63 3A 78 */   \
-                    "xor %r3, %r3, %r7");   /* 7C 63 3A 78 */
+            __asm("xor %r3, %r3, %r7"       /* \x7C\x63\x3A\x78 */   \
+                    "xor %r3, %r3, %r7");   /* \x7C\x63\x3A\x78 */
 
 #define ThreadPattternStart() \
-            __asm("lis %r3, 0xFFEE" \
-                    "ori %r3, %r3, 0xDDCC");
+            __asm("lis %r3, 0xFFEE"          /* \x3C\x60\xFF\xEE */ \
+                    "ori %r3, %r3, 0xDDCC"); /* \x60\x63\xDD\xCC */
 
 #define ThreadPatternEnd() \
-            __asm("lis %r3, 0xFFEE" \
-                    "ori %r3, %r3, 0xDDCD");
+            __asm("lis %r3, 0xFFEE"          /* \x3C\x60\xFF\xEE */ \
+                    "ori %r3, %r3, 0xDDCD"); /* \x60\x63\xDD\xCD */
 
 
 
