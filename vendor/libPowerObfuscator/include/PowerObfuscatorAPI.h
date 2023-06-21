@@ -7,8 +7,75 @@
 #undef vector
 #include <vector>
 
+#define POBF_API /* __attribute__((visibility("hidden"))) GCC Only */
+#define START_PATTERN 0xAABBCCDD, 0x12345678, 0xEEFFEEFF 
+
 namespace pobf
 {
+    struct opd_s
+    {
+        uint32_t func;
+        uint32_t toc;
+    };
+
+    struct Pattern
+    {
+        const char* find;
+        const char* mask;
+        bool found;
+    };
+
+    namespace EncryptV1
+    {
+        extern char PRIV_API_KEY[];
+        extern int EXPORTS_TOC[];
+
+        extern void        POBF_API    SetApiKey(uint32_t key);
+        extern uint32_t    POBF_API    MixTimeSeed(clock_t a, time_t b, sys_pid_t c);
+        extern void        POBF_API    todo_SeedRandom(uint32_t seed);
+        extern int         POBF_API    todo_Random();
+        extern uint32_t    POBF_API    StringToHash32(const char* str);
+        extern void        POBF_API    Start(int suppressParameter);
+        extern void        POBF_API    DecryptAll();
+        extern void        POBF_API    DecryptTextSegment(uint32_t function);
+        extern void        POBF_API    DecryptDataSegment();
+        extern bool        POBF_API    Skip(uint32_t instruction);
+    }
+
+    namespace EncryptV2
+    {
+        extern bool POBF_API DataCompare(const uint8_t* pbData, const uint8_t* pbMask, const char* szMask);
+        extern bool POBF_API FindPattern(uintptr_t address, uint32_t length, uint8_t step, uint8_t* bytes, const char* mask, uint32_t* foundOffset);
+        extern void POBF_API FindPatternsInParallel(uintptr_t address, uint32_t length, std::vector<Pattern>& patterns, std::vector<uint32_t>& foundOffsets);
+        extern void POBF_API DecryptFunction(uint8_t* data, uint32_t startIndex, uint32_t endIndex, bool quick = false);
+
+        namespace Default
+        {
+            extern void POBF_API __encryptFunctionStart(void* function, bool quick);
+            extern void POBF_API _encryptFunctionStart(void* function, bool quick);
+            extern void POBF_API __encryptFunctionEnd(void* function, bool quick, bool deleteData = false);
+            extern void POBF_API _encryptFunctionEnd(void* function, bool quick, bool deleteData = false);
+        }
+
+        namespace Quick
+        {
+            extern void POBF_API __encryptFunctionStart(void* function, uint8_t* saveBuffer, uint32_t* start, uint32_t* end);
+            extern void POBF_API _encryptFunctionStart(void* function, uint8_t* saveBuffer, uint32_t* start, uint32_t* end);
+            extern void POBF_API _encryptFunctionEnd(uint8_t* saveBuffer, uint32_t start, uint32_t end);
+        }
+
+        namespace Inline
+        {
+            extern void POBF_API __encryptFunctionStart(void* function);
+            extern void POBF_API _encryptFunctionStart(void* function);
+            extern void POBF_API __encryptFunctionEnd(void* function);
+            extern void POBF_API _encryptFunctionEnd(void* function);
+        }
+    }
+
+
+
+
     namespace Vx
     {
         // https://stackoverflow.com/questions/7270473/compile-time-string-encryption
@@ -708,11 +775,64 @@ namespace pobf
 
 
 
+        /******* DefaultEncrypt ********/
+#define encryptFunctionStart(function) \
+            void *local_encrypt_function_address = function; \
+            pobf::EncryptV2::Default::_encryptFunctionStart(local_encrypt_function_address, false);
+
+#define encryptFunctionEnd() \
+            pobf::EncryptV2::Default::_encryptFunctionEnd(local_encrypt_function_address, false);
+
+#define encryptFunctionEnd_deletedata() \
+            pobf::EncryptV2::Default::_encryptFunctionEnd(local_encrypt_function_address, false, true);
 
 
+        /******* QuickEncrypt ********/
+#define encryptFunctionStart_quick(function, bufferSize) \
+            void *local_encrypt_function_address = function; \
+            static uint8_t encryptionBuffer[bufferSize]; \
+            static uint32_t startEncryptAddress = 0; \
+            static uint32_t endEncryptAddress = 0; \
+            pobf::EncryptV2::Quick::_encryptFunctionStart(function, encryptionBuffer, &startEncryptAddress, &endEncryptAddress);
 
-extern int EXPORTS_TOC[];
-extern void pobf_Start(int suppressParameter);
+#define encryptFunctionEnd_quick() \
+            pobf::EncryptV2::Quick::_encryptFunctionEnd(encryptionBuffer, startEncryptAddress, endEncryptAddress);
+
+
+        /******* InlineEncrypt ********/
+#define inline_encryptFunctionStart(function) \
+            void *local_encrypt_function_address = function; \
+            pobf::EncryptV2::Inline::_encryptFunctionStart(local_encrypt_function_address);
+
+#define inline_encryptFunctionEnd() \
+            pobf::EncryptV2::Inline::_encryptFunctionEnd(local_encrypt_function_address);
+
+
+        /******* For pattern scanning ********/
+#define StartatternDefault() \
+            __asm("xor %r3, %r3, %r4;"       /* \x7C\x63\x22\x78 */    \
+                    "xor %r3, %r3, %r4;");   /* \x7C\x63\x22\x78 */
+
+#define EndPatternDefault() \
+            __asm("xor %r3, %r3, %r5;"       /* \x7C\x63\x2A\x78 */   \
+                    "xor %r3, %r3, %r5;");   /* \x7C\x63\x2A\x78 */
+
+#define StartPatternQuick() \
+            __asm("xor %r3, %r3, %r6;"       /* \x7C\x63\x32\x78 */   \
+                    "xor %r3, %r3, %r6;");   /* \x7C\x63\x32\x78 */
+
+#define EndPatternQuick() \
+            __asm("xor %r3, %r3, %r7;"       /* \x7C\x63\x3A\x78 */   \
+                    "xor %r3, %r3, %r7;");   /* \x7C\x63\x3A\x78 */
+
+#define StartPattternThread() \
+            __asm("lis %r3, 0xFFEE;"          /* \x3C\x60\xFF\xEE */ \
+                    "ori %r3, %r3, 0xDDCC;"); /* \x60\x63\xDD\xCC */
+
+#define EndPatternThread() \
+            __asm("lis %r3, 0xFFEE;"          /* \x3C\x60\xFF\xEE */ \
+                    "ori %r3, %r3, 0xDDCD;"); /* \x60\x63\xDD\xCD */
+
 
 
 
