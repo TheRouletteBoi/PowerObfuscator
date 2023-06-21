@@ -4,6 +4,8 @@
 #include <types.h>
 #include <stdint.h>
 #include <string>
+#undef vector
+#include <vector>
 
 namespace pobf
 {
@@ -665,10 +667,7 @@ namespace pobf
 
 
 
-
 /************* VxObfuscator *******************/
-
-
 
 // Compile-time hashing macro, hash values changes using the first pseudorandom number in sequence
 #define vxHASH(Str) (uint32_t)(pobf::Vx::vxCplConstantify<pobf::Vx::vxCplHash(Str)>::Value ^ pobf::Vx::vxCplConstantify<pobf::Vx::vxCplRandom(1)>::Value)
@@ -678,6 +677,8 @@ namespace pobf
 #define vxENCRYPT(Str) (pobf::Vx::vxCplEncryptedString<pobf::Vx::vxCplIndexes<sizeof(Str) - 1>::Result>(Str).decrypt())
 #define ENCRYPTSTRV1(str) vxENCRYPT(str)
 
+
+
 /************* ADVobfuscator *******************/
 
 // Prefix notation
@@ -686,6 +687,8 @@ namespace pobf
 #define ADV_OBFUSCATED_STR(str) (ADV_DEF_OBFUSCATED(str).decrypt())
 
 #define ENCRYPTSTRV2(str) ADV_OBFUSCATED_STR(str)
+
+
 
 /************* EnstoneObfuscator *******************/
 
