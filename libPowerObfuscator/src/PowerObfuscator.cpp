@@ -2,21 +2,11 @@
 
 namespace pobf
 {
-    __fnData fnData;
-
     char PRIV_API_KEY[] = "TEST KEY XXX";
-
-    int decryptData_START = 0x00000000;
-    int decryptData_SIZE = 0x00000000;
-    int decryptData_CODE = 0x00000000;
 
     int EXPORTS_TOC[] =
     {
-       START_PATTERN,
-       (int)&fnData,
-       (int)&decryptData_START,
-       (int)&decryptData_SIZE,
-       (int)&decryptData_CODE,
+       START_PATTERN
     };
 
     uint32_t g_Seed = 0;
@@ -26,7 +16,21 @@ namespace pobf
         g_Seed = key;
     }
 
-    uint32_t GenerateHash32(const char* str)
+    uint32_t MixTimeSeed(clock_t a, time_t b, sys_pid_t c)
+    {
+        a = a - b;  a = a - c;  a = a ^ (c >> 13);
+        b = b - c;  b = b - a;  b = b ^ (a << 8);
+        c = c - a;  c = c - b;  c = c ^ (b >> 13);
+        a = a - b;  a = a - c;  a = a ^ (c >> 12);
+        b = b - c;  b = b - a;  b = b ^ (a << 16);
+        c = c - a;  c = c - b;  c = c ^ (b >> 5);
+        a = a - b;  a = a - c;  a = a ^ (c >> 3);
+        b = b - c;  b = b - a;  b = b ^ (a << 10);
+        c = c - a;  c = c - b;  c = c ^ (b >> 15);
+        return c;
+    }
+
+    uint32_t StringToHash32(const char* str)
     {
         uint32_t hash = 0;
         for (uint8_t* p = (uint8_t*)str; *p != '\0'; p++)
@@ -35,35 +39,41 @@ namespace pobf
         return hash;
     }
 
-    uint32_t HashFile32()
+    void todo_SeedRandom(uint32_t seed)
     {
-        //return vxRAND();
+
+    }
+
+    int todo_Random()
+    {
         return 0;
     }
 
     void Start()
     {
-        uint32_t fileHash = HashFile32();
-        uint32_t keyHash = GenerateHash32(PRIV_API_KEY);
+        todo_SeedRandom(MixTimeSeed(clock(), time(NULL), sys_process_getpid()));
 
-        SetApiKey(fileHash + keyHash);
+        uint32_t random = todo_Random();
+        uint32_t keyHash = StringToHash32(PRIV_API_KEY);
+
+        SetApiKey(random + keyHash);
 
         DecryptAll();
     }
 
     void DecryptAll()
     {
-        for (int i = 1; i < fnData.count; i++)
-            DecryptTextSegment(fnData.start + fnData.offset[i]);
+        sys_prx_segment_info_t segment = GetModuleSegmentInfo(nullptr, TEXT_SEGMENT);
+
+        for (int i = 0; i < segment.memsz; i++)
+            DecryptTextSegment(segment.base);
 
         DecryptDataSegment();
     }
 
     void DecryptTextSegment(uint32_t function)
     {
-        // use sys_prx_module_info to get text segment
-
-        function = *(uint32_t*)function; // Get opd_s
+        // function = ((opd_s*)function)->func;  // segment.base doesn't have opd section???
         pobf_Random<0x11111111, 0x66666666, 0x7FFFFFFF> random(g_Seed);
 
         uint32_t instruction = 0;
@@ -83,11 +93,12 @@ namespace pobf
 
     void DecryptDataSegment()
     {
-        // use sys_prx_module_info to get data segment
-        uint32_t* ptr = (uint32_t*)decryptData_START;
-        for (int i = 0; i < decryptData_SIZE; i++, ptr++)
+        sys_prx_segment_info_t segment = GetModuleSegmentInfo(nullptr, DATA_SEGMENT);
+        uint32_t* ptr = (uint32_t*)segment.base;
+
+        for (int i = 0; i < segment.memsz; i++, ptr++)
         {
-            uint32_t code = *ptr ^ (decryptData_CODE * (i + 1));
+            uint32_t code = *ptr ^ (segment.base * (i + 1));
             pobf_write_process_memory(ptr, &code, 4);
         }
     }

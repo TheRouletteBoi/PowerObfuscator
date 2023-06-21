@@ -2,41 +2,39 @@
 #define __POWEROBFUSCATOR_H__
 
 #include <types.h>
+#include <time.h>
+#include <string.h>
+#undef vector
+#include <vector>
 #include "Defines.h"
 #include "Memory/Memory.h"
+#include "Module/Module.h"
 
 namespace pobf
 {
-    struct __fnData
+    struct opd_s
     {
-        int16_t count;
-        int32_t start;
-        int16_t offset[256];
+        uint32_t func;
+        uint32_t toc;
     };
 
-    extern __fnData fnData;
-
-    extern char PRIV_API_KEY[];
-
-    extern int decryptData_START;
-    extern int decryptData_SIZE;
-    extern int decryptData_CODE;
+    struct Pattern
+    {
+        const char* find;
+        const char* mask;
+        bool found;
+    };
 
     #define START_PATTERN 0xAABBCCDD, 0x12345678, 0xEEFFEEFF 
+
+    extern char PRIV_API_KEY[];
     extern int EXPORTS_TOC[];
 
-    /*
-    struct
-    {
-       int32_t fnData_ptr;
-       int32_t decryptData_start;
-       int32_t decryptData_code;
-    };
-    */
-
     void        POBF_API    SetApiKey(uint32_t key);
-    uint32_t    POBF_API    GenerateHash32(const char* str);
-    uint32_t    POBF_API    HashFile32();
+    uint32_t    POBF_API    MixTimeSeed(clock_t a, time_t b, sys_pid_t c);
+    void        POBF_API    todo_SeedRandom(uint32_t seed);
+    int         POBF_API    todo_Random();
+    uint32_t    POBF_API    StringToHash32(const char* str);
     void        POBF_API    Start();
     void        POBF_API    DecryptAll();
     void        POBF_API    DecryptTextSegment(uint32_t function);
