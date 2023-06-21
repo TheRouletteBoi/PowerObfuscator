@@ -3,7 +3,7 @@
 #include <sys/ppu_thread.h>
 #include <sys/timer.h>
 #include <libpsutil.h>
-#include "PowerObfuscatorAPI.h"
+#include <PowerObfuscatorAPI.h>
 
 SYS_MODULE_INFO( PowerObfuscatorSPRX, 0, 1, 1);
 SYS_MODULE_START( PowerObfuscatorSPRXMain );
