@@ -147,6 +147,26 @@ void pobf_AllStringEncryptions_Example()
     printf("vxHASH: 0x%08X\n", vxHASH("hello world!"));
 }
 
+void pobf_DumpObfuscation_Example()
+{
+    pobf::DumpObfuscation::SetEbootRange(0x0010200, 0x17FDA50);
+
+    // Example using compile time random
+    switch (vxRANDOM(0, 4))
+    {
+    case 0: { pobf::DumpObfuscation::ReplaceLisR3(); break; }
+    case 1: { pobf::DumpObfuscation::ReplaceLisR4(); break; }
+    case 2: { pobf::DumpObfuscation::ReplaceLisR5(); break; }
+    case 3: { pobf::DumpObfuscation::ReplaceLisR6(); break; }
+    case 4: { pobf::DumpObfuscation::ReplaceLisR7(); break; }
+    default: { pobf::DumpObfuscation::ReplaceLisR3(); }
+    }
+
+
+    // Example using multiple types 
+    pobf::DumpObfuscation::ReplaceByType(pobf::DumpObfuscation::LisR3 | pobf::DumpObfuscation::LisR4 | pobf::DumpObfuscation::LisR6);
+}
+
 extern "C" int PowerObfuscatorSPRXMain(int argc, char* argv[])
 {
     inline_encryptFunctionStart((void*)PowerObfuscatorSPRXMain);
