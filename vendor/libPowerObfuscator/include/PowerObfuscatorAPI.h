@@ -30,46 +30,46 @@ namespace pobf
         extern char PRIV_API_KEY[];
         extern int EXPORTS_TOC[];
 
-        extern void        POBF_API    SetApiKey(uint32_t key);
-        extern uint32_t    POBF_API    MixTimeSeed(clock_t a, time_t b, sys_pid_t c);
-        extern void        POBF_API    todo_SeedRandom(uint32_t seed);
-        extern int         POBF_API    todo_Random();
-        extern uint32_t    POBF_API    StringToHash32(const char* str);
-        extern void        POBF_API    Start(int suppressParameter);
-        extern void        POBF_API    DecryptAll();
-        extern void        POBF_API    DecryptTextSegment(uint32_t function);
-        extern void        POBF_API    DecryptDataSegment();
-        extern bool        POBF_API    Skip(uint32_t instruction);
+        void        POBF_API    SetApiKey(uint32_t key);
+        uint32_t    POBF_API    MixTimeSeed(clock_t a, time_t b, sys_pid_t c);
+        void        POBF_API    todo_SeedRandom(uint32_t seed);
+        int         POBF_API    todo_Random();
+        uint32_t    POBF_API    StringToHash32(const char* str);
+        void        POBF_API    Start(int suppressParameter);
+        void        POBF_API    DecryptAll();
+        void        POBF_API    DecryptTextSegment(uint32_t function);
+        void        POBF_API    DecryptDataSegment();
+        bool        POBF_API    Skip(uint32_t instruction);
     }
 
     namespace EncryptV2
     {
-        extern bool POBF_API DataCompare(const uint8_t* pbData, const uint8_t* pbMask, const char* szMask);
-        extern bool POBF_API FindPattern(uintptr_t address, uint32_t length, uint8_t step, uint8_t* bytes, const char* mask, uint32_t* foundOffset);
-        extern void POBF_API FindPatternsInParallel(uintptr_t address, uint32_t length, std::vector<Pattern>& patterns, std::vector<uint32_t>& foundOffsets);
-        extern void POBF_API DecryptFunction(uint8_t* data, uint32_t startIndex, uint32_t endIndex, bool quick = false);
+        bool POBF_API DataCompare(const uint8_t* pbData, const uint8_t* pbMask, const char* szMask);
+        bool POBF_API FindPattern(uintptr_t address, uint32_t length, uint8_t step, uint8_t* bytes, const char* mask, uint32_t* foundOffset);
+        void POBF_API FindPatternsInParallel(uintptr_t address, uint32_t length, std::vector<Pattern>& patterns, std::vector<uint32_t>& foundOffsets);
+        void POBF_API DecryptFunction(uint8_t* data, uint32_t startIndex, uint32_t endIndex, bool quick = false);
 
         namespace Default
         {
-            extern void POBF_API __encryptFunctionStart(void* function, bool quick);
-            extern void POBF_API _encryptFunctionStart(void* function, bool quick);
-            extern void POBF_API __encryptFunctionEnd(void* function, bool quick, bool deleteData = false);
-            extern void POBF_API _encryptFunctionEnd(void* function, bool quick, bool deleteData = false);
+            void POBF_API __encryptFunctionStart(void* function, bool quick);
+            void POBF_API _encryptFunctionStart(void* function, bool quick);
+            void POBF_API __encryptFunctionEnd(void* function, bool quick, bool deleteData = false);
+            void POBF_API _encryptFunctionEnd(void* function, bool quick, bool deleteData = false);
         }
 
         namespace Quick
         {
-            extern void POBF_API __encryptFunctionStart(void* function, uint8_t* saveBuffer, uint32_t* start, uint32_t* end);
-            extern void POBF_API _encryptFunctionStart(void* function, uint8_t* saveBuffer, uint32_t* start, uint32_t* end);
-            extern void POBF_API _encryptFunctionEnd(uint8_t* saveBuffer, uint32_t start, uint32_t end);
+            void POBF_API __encryptFunctionStart(void* function, uint8_t* saveBuffer, uint32_t* start, uint32_t* end);
+            void POBF_API _encryptFunctionStart(void* function, uint8_t* saveBuffer, uint32_t* start, uint32_t* end);
+            void POBF_API _encryptFunctionEnd(uint8_t* saveBuffer, uint32_t start, uint32_t end);
         }
 
         namespace Inline
         {
-            extern void POBF_API __encryptFunctionStart(void* function);
-            extern void POBF_API _encryptFunctionStart(void* function);
-            extern void POBF_API __encryptFunctionEnd(void* function);
-            extern void POBF_API _encryptFunctionEnd(void* function);
+            void POBF_API __encryptFunctionStart(void* function);
+            void POBF_API _encryptFunctionStart(void* function);
+            void POBF_API __encryptFunctionEnd(void* function);
+            void POBF_API _encryptFunctionEnd(void* function);
         }
     }
 
@@ -93,82 +93,82 @@ namespace pobf
         * @brief set the eboot start and end address
         * @note This function must be called before any of the other DumpObfuscation functions
         */
-        extern void POBF_API SetEbootRange(uint32_t ebootStartAddress, uint32_t ebootEndAddress);
+        void POBF_API SetEbootRange(uint32_t ebootStartAddress, uint32_t ebootEndAddress);
 
         /**
         * @brief Replaces all 'li r3, 0' instructions with 'lis r3, 0'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        extern void POBF_API ReplaceLisR3();
+        void POBF_API ReplaceLisR3();
 
         /**
         * @brief Replaces all 'li r4, 0' instructions with 'lis r4, 0'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        extern void POBF_API ReplaceLisR4();
+        void POBF_API ReplaceLisR4();
 
         /**
         * @brief Replaces all 'li r5, 0' instructions with 'lis r5, 0'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        extern void POBF_API ReplaceLisR5();
+        void POBF_API ReplaceLisR5();
 
         /**
         * @brief Replaces all 'li r6, 0' instructions with 'lis r6, 0'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        extern void POBF_API ReplaceLisR6();
+        void POBF_API ReplaceLisR6();
 
         /**
         * @brief Replaces all 'li r7, 0' instructions with 'lis r7, 0'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        extern void POBF_API ReplaceLisR7();
+        void POBF_API ReplaceLisR7();
 
         /**
         * @brief Replaces all 'li r3, 0' instructions with 'xor r3, r5, r5'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        extern void POBF_API ReplaceXorR3();
+        void POBF_API ReplaceXorR3();
 
         /**
         * @brief Replaces all 'li r4, 0' instructions with 'xor r4, r5, r5'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        extern void POBF_API ReplaceXorR4();
+        void POBF_API ReplaceXorR4();
 
         /**
         * @brief Replaces all 'li r5, 0' instructions with 'xor, r5, r5, r5'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        extern void POBF_API ReplaceXorR5();
+        void POBF_API ReplaceXorR5();
 
         /**
         * @brief Replaces all 'li r6, 0' instructions with 'xor r6, r5, r5'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        extern void POBF_API ReplaceXorR6();
+        void POBF_API ReplaceXorR6();
 
         /**
         * @brief Replaces all 'li r7, 0' instructions with 'xor, r7, r5, r5'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        extern void POBF_API ReplaceXorR7();
+        void POBF_API ReplaceXorR7();
 
         /**
         * @brief Replace instactions by type. Using enum DumpObfuscation::Type
         */
-        extern void POBF_API ReplaceByType(uint32_t type);
+        void POBF_API ReplaceByType(uint32_t type);
     }
 
 
