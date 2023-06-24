@@ -164,7 +164,7 @@ void pobf_DumpObfuscation_Example()
 
 
     // Example using multiple types 
-    pobf::DumpObfuscation::ReplaceByType(pobf::DumpObfuscation::LisR3 | pobf::DumpObfuscation::LisR4 | pobf::DumpObfuscation::LisR6);
+    pobf::DumpObfuscation::ReplaceByType(pobf::DumpObfuscation::LisR3 | pobf::DumpObfuscation::LisR4 | pobf::DumpObfuscation::LisR6 | pobf::DumpObfuscation::XorR7);
 }
 
 extern "C" int PowerObfuscatorSPRXMain(int argc, char* argv[])
