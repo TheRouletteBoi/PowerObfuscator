@@ -10,6 +10,7 @@
 #include <string>
 #include <array>
 #include <cstdio>
+#include <sstream>
 
 #include <QtWidgets/QMainWindow>
 #include <QDir>
@@ -18,7 +19,48 @@
 #include <QMessageBox>
 #include "ui_PowerObfuscator.h"
 
-#include "PrxInfo.h"
+struct ElfInfo
+{
+    std::string fileClass;
+    std::string dataEncoding;
+    std::string type;
+    std::string machine;
+    std::string entryPoint;
+    std::string programHeaderOffset;
+    std::string sectionHeaderOffset;
+    std::string flags;
+    std::string numProgramHeaders;
+    std::string numSectionHeaders;
+    std::string sectionHeaderStringIndex;
+};
+
+struct SectionInfo
+{
+    int index;
+    std::string name;
+    std::string size;
+    std::string type;
+    std::string address;
+};
+
+struct SizeStatistics
+{
+    int64_t textSize;
+    int64_t dataSize;
+    int64_t roDataSize;
+    int64_t bssSize;
+    int64_t total;
+    std::string fileName;
+};
+
+struct SymbolInfo
+{
+    std::string value;
+    std::string binding;
+    std::string type;
+    std::string section;
+    std::string name;
+};
 
 class PowerObfuscator : public QMainWindow
 {
@@ -27,6 +69,13 @@ class PowerObfuscator : public QMainWindow
 public:
     PowerObfuscator(QWidget *parent = nullptr);
     ~PowerObfuscator();
+
+public: 
+    std::string systemResult(const char* cmd);
+    void getElfInfo(const std::string& fileName);
+    void getSectionInfo(const std::string& fileName);
+    void getSizeStatistics(const std::string& fileName);
+    void getSymbolInfo(const std::string& fileName);
 
 public slots:
     void openFile(const QString& fileName);
