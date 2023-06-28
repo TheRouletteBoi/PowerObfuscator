@@ -75,66 +75,99 @@ namespace pobf
 
         void ReplaceLisR3()
         {
+            if (!g_EbootStart)
+                return;
+
             for (uint32_t i = g_EbootStart; i < g_EbootEnd; i += 4)
                 ReplaceLiR3WithLisR3(i);
         }
 
         void ReplaceLisR4()
         {
+            if (!g_EbootStart)
+                return;
+
             for (uint32_t i = g_EbootStart; i < g_EbootEnd; i += 4)
                 ReplaceLiR4WithLisR4(i);
         }
 
         void ReplaceLisR5()
         {
+            if (!g_EbootStart)
+                return;
+
             for (uint32_t i = g_EbootStart; i < g_EbootEnd; i += 4)
                 ReplaceLiR5WithLisR5(i);
         }
 
         void ReplaceLisR6()
         {
+            if (!g_EbootStart)
+                return;
+
             for (uint32_t i = g_EbootStart; i < g_EbootEnd; i += 4)
                 ReplaceLiR6WithLisR6(i);
         }
 
         void ReplaceLisR7()
         {
+            if (!g_EbootStart)
+                return;
+
             for (uint32_t i = g_EbootStart; i < g_EbootEnd; i += 4)
                 ReplaceLiR7WithLisR7(i);
         }
 
         void ReplaceXorR3()
         {
+            if (!g_EbootStart)
+                return;
+
             for (uint32_t i = g_EbootStart; i < g_EbootEnd; i += 4)
                 ReplaceLiR3WithXorR3(i);
         }
 
         void ReplaceXorR4()
         {
+            if (!g_EbootStart)
+                return;
+
             for (uint32_t i = g_EbootStart; i < g_EbootEnd; i += 4)
                 ReplaceLiR4WithXorR4(i);
         }
 
         void ReplaceXorR5()
         {
+            if (!g_EbootStart)
+                return;
+
             for (uint32_t i = g_EbootStart; i < g_EbootEnd; i += 4)
                 ReplaceLiR5WithXorR5(i);
         }
 
         void ReplaceXorR6()
         {
+            if (!g_EbootStart)
+                return;
+
             for (uint32_t i = g_EbootStart; i < g_EbootEnd; i += 4)
                 ReplaceLiR6WithXorR6(i);
         }
 
         void ReplaceXorR7()
         {
+            if (!g_EbootStart)
+                return;
+
             for (uint32_t i = g_EbootStart; i < g_EbootEnd; i += 4)
                 ReplaceLiR7WithXorR7(i);
         }
 
         void ReplaceByType(uint32_t type)
         {
+            if (!g_EbootStart)
+                return;
+
             for (uint32_t i = g_EbootStart; i < g_EbootEnd; i += 4)
             {
                 if (type & LisR3)
