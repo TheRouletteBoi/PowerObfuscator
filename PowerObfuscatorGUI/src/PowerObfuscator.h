@@ -11,6 +11,8 @@
 #include <array>
 #include <cstdio>
 #include <sstream>
+#include <algorithm>
+#include <ranges>
 
 #include <QtWidgets/QMainWindow>
 #include <QDir>
@@ -38,18 +40,18 @@ struct SectionInfo
 {
     int index;
     std::string name;
-    std::string size;
+    std::uint32_t size; // FIXME(Roulette): This should be std::string because some sizes have parentheses. Specifically .bss segment so if you have a bug when reading .bss it's because of this code
     std::string type;
-    std::string address;
+    std::uint32_t address;
 };
 
 struct SizeStatistics
 {
-    int64_t textSize;
-    int64_t dataSize;
-    int64_t roDataSize;
-    int64_t bssSize;
-    int64_t total;
+    uint64_t textSize;
+    uint64_t dataSize;
+    uint64_t roDataSize;
+    uint64_t bssSize;
+    uint64_t total;
     std::string fileName;
 };
 
@@ -71,7 +73,14 @@ public:
     ~PowerObfuscator();
 
 public: 
+    /***
+    * @breif calls a terminal command then returns the result
+    */
     std::string systemResult(const char* cmd);
+    /***
+    * @brief removes white space from text
+    */
+    std::string trim(std::string_view str);
     void getElfInfo(const std::string& fileName);
     void getSectionInfo(const std::string& fileName);
     void getSizeStatistics(const std::string& fileName);
@@ -90,5 +99,10 @@ private:
     Ui::PowerObfuscatorClass ui;
     QDir m_currentDir;
     bool m_doesfileExist{};
+    bool m_isPrx{};
     quint64 m_fileSize{};
+    ElfInfo m_elfInfo;
+    std::vector<SectionInfo> m_sections;
+    SizeStatistics m_sizeStats;
+    std::vector<SymbolInfo> m_symbolsInfo;
 };
