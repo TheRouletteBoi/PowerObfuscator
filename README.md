@@ -28,9 +28,9 @@ PowerObfuscator obfuscate your PS3 .PRX/.SPRX plugins
 
 
 # Credits
-- John Valincius
-- Gopro2027
-- LeFF
 - andrivet
-- jordywastaken
 - cr-lupin
+- Gopro2027
+- John Valincius
+- jordywastaken
+- LeFF
