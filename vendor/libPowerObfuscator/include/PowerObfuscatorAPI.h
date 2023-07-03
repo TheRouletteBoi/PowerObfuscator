@@ -166,7 +166,7 @@ namespace pobf
         void POBF_API ReplaceXorR7();
 
         /**
-        * @brief Replace instactions by type. Using enum DumpObfuscation::Type
+        * @brief Replace instructions by type. Using enum DumpObfuscation::Type
         */
         void POBF_API ReplaceByType(uint32_t type);
     }
