@@ -12,8 +12,8 @@ PowerObfuscator obfuscate your PS3 .PRX/.SPRX plugins
 
 # TODO Tutorial
 - Add -lc to your project library dependencies because memcpy is used in vxENCRYPT
-- EnstoneStringEncrypt requires you to overrride new and delete operators because it uses std::string. Best to use with libpsutils.h
-- FindPatternsInParallel requires you to overrride new and delete operators because it uses std::vector. Best to use with libpsutils.h
+- EnstoneStringEncrypt requires you to overrride new and delete operators because it uses std::string. Best to `#include <libpsutils.h>`
+- FindPatternsInParallel requires you to overrride new and delete operators because it uses std::vector. Best to `#include <libpsutils.h>`
 - You will need visual studio 2022 or higher to build QT GUI app because QT extensions don't work with visual studio 2013 
 
  
