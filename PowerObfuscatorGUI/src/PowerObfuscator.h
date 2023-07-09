@@ -94,7 +94,6 @@ public slots:
 
 private slots:
     void on_loadPrxButton_clicked();
-    void on_showInfoButton_clicked();
     void on_obfuscateButton_clicked();
     void on_deobfuscateButton_clicked();
 

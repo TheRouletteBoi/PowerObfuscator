@@ -65,19 +65,6 @@
      <string>Deobfuscate</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="showInfoButton">
-    <property name="geometry">
-     <rect>
-      <x>190</x>
-      <y>50</y>
-      <width>80</width>
-      <height>30</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Show Info</string>
-    </property>
-   </widget>
    <widget class="QTextEdit" name="keyTextEdit">
     <property name="geometry">
      <rect>

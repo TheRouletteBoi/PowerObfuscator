@@ -48,26 +48,6 @@ void PowerObfuscator::openFile(const QString& fileName)
     m_qDataStream.setDevice(&m_qFile);
 }
 
-void PowerObfuscator::on_showInfoButton_clicked()
-{
-    QString text = "No file loaded";
-
-    if (m_doesfileExist)
-    {
-        std::string format = std::format("ELF Type: {0}\n"
-            "Entry Point : {1}\nFlags : {2}\n"
-            "Segment Information\nText Size : {3}\n"
-            "Data Size : {4}\n"
-            "RO - Data Size : {5}\n"
-            "BSS Size : {6}\n",
-            m_elfInfo.type, m_elfInfo.entryPoint, m_elfInfo.flags,
-            m_sizeStats.textSize, m_sizeStats.dataSize, m_sizeStats.roDataSize, m_sizeStats.bssSize);
-        text = QString::fromStdString(format);
-    }
-
-    QMessageBox::information(this, windowTitle(), text);
-}
-
 void PowerObfuscator::on_obfuscateButton_clicked()
 {
     if (!m_doesfileExist)
