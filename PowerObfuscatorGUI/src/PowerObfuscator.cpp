@@ -21,15 +21,15 @@ void PowerObfuscator::on_loadPrxButton_clicked()
 
 void PowerObfuscator::openFile(const QString& fileName)
 {
-    QFile file(fileName);
+    m_qFile.setFileName(fileName);
 
-    m_doesfileExist = file.exists();
+    m_doesfileExist = m_qFile.exists();
     if (!m_doesfileExist)
         return;
 
-    QFileInfo fileInfo(file);
-    m_currentDir = fileInfo.dir();
-    m_fileSize = fileInfo.size();
+    m_qFileInfo.setFile(m_qFile);
+    m_currentDir = m_qFileInfo.dir();
+    m_fileSize = m_qFileInfo.size();
     ui.filePathComboBox->addItem(fileName);
 
     std::string fileNameStdString = fileName.toStdString();
@@ -37,6 +37,15 @@ void PowerObfuscator::openFile(const QString& fileName)
     getSizeStatistics(fileNameStdString);
     getSectionInfo(fileNameStdString);
     getSymbolInfo(fileNameStdString);
+
+    if (!m_qFile.open(QIODevice::ReadWrite))
+    {
+        qDebug() << "Could not open file for reading";
+        return;
+    }
+
+    // Read file to data stream
+    m_qDataStream.setDevice(&m_qFile);
 }
 
 void PowerObfuscator::on_showInfoButton_clicked()
@@ -50,8 +59,8 @@ void PowerObfuscator::on_showInfoButton_clicked()
             "Segment Information\nText Size : {3}\n"
             "Data Size : {4}\n"
             "RO - Data Size : {5}\n"
-            "BSS Size : {6}\n", 
-            m_elfInfo.type, m_elfInfo.entryPoint, m_elfInfo.flags, 
+            "BSS Size : {6}\n",
+            m_elfInfo.type, m_elfInfo.entryPoint, m_elfInfo.flags,
             m_sizeStats.textSize, m_sizeStats.dataSize, m_sizeStats.roDataSize, m_sizeStats.bssSize);
         text = QString::fromStdString(format);
     }
@@ -64,32 +73,112 @@ void PowerObfuscator::on_obfuscateButton_clicked()
     if (!m_doesfileExist)
         return;
 
-    ui.outputTextEdit->append("----- Segment Obfucation [.text]-----");
+    ui.outputTextEdit->append("----- Starting prx obfuscation -----");
+    ui.outputTextEdit->append("Reading file buffer");
 
-    ui.outputTextEdit->append("Searching for segment address and size");
-    uint32_t address{};
-    uint32_t size{};
+    // Read file buffer
+    std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(m_fileSize);
+    uint8_t* byteArray = buffer.get();
+    int readBytes = m_qDataStream.readRawData(reinterpret_cast<char*>(byteArray), m_fileSize);
 
-    for (const auto& section : m_sections)
-    {
-        if (section.name == ".text")
-        {
-            address = section.address;
-            size = section.size;
-        }
-    }
+    qDebug() << "Read from buffer bytes";
+    qDebug() << readBytes;
 
-    ui.outputTextEdit->append("Encrypting Text segment");
-    for (uint32_t i = address; i < size; i++)
-    {
+    qDebug() << "File size";
+    qDebug() << m_fileSize;
 
-    }
+    // Obfuscate [.text] segment
+    obfuscateSegment(".text", byteArray);
+
+    // Obfuscate [.sceStub.text] segment
+    obfuscateSegment(".sceStub.text", byteArray);
+
+    // Obfuscate [.rodata] segment
+    obfuscateSegment(".rodata", byteArray);
+
+    // Obfuscate [.data] segment
+    obfuscateSegment(".data", byteArray);
+
+    // Save obfuscated prx file
+    saveObfuscatedFile(byteArray);
 }
 
 void PowerObfuscator::on_deobfuscateButton_clicked()
 {
     if (!m_doesfileExist)
         return;
+}
+
+void PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byteArray)
+{
+    ui.outputTextEdit->append("Searching for [" + segmentName + "] segment address and size");
+
+    const uint32_t elfHeaderSize = 0xF0;
+
+    uint32_t segmentAddress{};
+    uint32_t segmentSize{};
+
+    for (const auto& section : m_sections)
+    {
+        if (section.name == segmentName.toStdString())
+        {
+            segmentAddress = section.address;
+            segmentSize = section.size;
+        }
+    }
+
+    //uint32_t segmentLocation = geBinaryOffsetFromSegment(segmentName);
+
+    ui.outputTextEdit->append("Found [" + segmentName + "] segment address and size");
+
+    qDebug() << "----- " << segmentName << " segment -----";
+    qDebug() << "Segment Address: " << Qt::hex << Qt::showbase << segmentAddress;
+    qDebug() << "Segment Size: " << Qt::hex << Qt::showbase << segmentSize;
+
+    segmentAddress += elfHeaderSize;
+    qDebug() << "Segment Address with ELF header: " << Qt::hex << Qt::showbase << segmentAddress;
+
+    uint32_t segmentSizeInBinary = segmentAddress + segmentSize;
+    qDebug() << "Segment Size with ELF header: " << Qt::hex << Qt::showbase << segmentSizeInBinary;
+
+    ui.outputTextEdit->append("Encrypting [" + segmentName + "] segment");
+    for (uint32_t i = segmentAddress; i < segmentSizeInBinary; i++)
+    {
+        byteArray[i] = (byteArray[i] ^ 0x69);
+    }
+}
+
+uint32_t PowerObfuscator::geBinaryOffsetFromSegment(const QString& segmentName)
+{
+    uint32_t locationInBinary{};
+
+    for (const auto& section : m_sections)
+    {
+        locationInBinary += section.size;
+
+        if (section.name == segmentName.toStdString())
+            break;
+    }
+
+    return locationInBinary;
+}
+
+void PowerObfuscator::saveObfuscatedFile(uint8_t* byteArray)
+{
+    ui.outputTextEdit->append("Saving obfuscated prx file");
+    QString obfuscatedFileName = m_qFileInfo.path() + "/" + "obf_" + m_qFileInfo.fileName();
+    ui.outputTextEdit->append(obfuscatedFileName);
+
+    QFile obfuscatedFile(obfuscatedFileName);
+    if (obfuscatedFile.open(QIODevice::WriteOnly))
+    {
+        QDataStream obfuscatedDataStream(&obfuscatedFile);
+
+        // Write the modified data to the new file
+        obfuscatedDataStream.writeRawData(reinterpret_cast<const char*>(byteArray), m_fileSize);
+
+        obfuscatedFile.close();
+    }
 }
 
 std::string PowerObfuscator::systemResult(const char* cmd)
@@ -107,16 +196,17 @@ std::string PowerObfuscator::systemResult(const char* cmd)
     return result;
 }
 
-std::string PowerObfuscator::trim(std::string_view str) 
+std::string PowerObfuscator::trim(std::string_view str)
 {
+    // Lambda function to check if a character is a whitespace character
     auto isSpace = [](char ch) { return std::isspace(ch); };
 
-    // wtf?? magic
+    // Create a view of the input string and apply range adaptors
     auto trimmedRange = str |
-        std::views::drop_while(isSpace) |
-        std::views::reverse |
-        std::views::drop_while(isSpace) |
-        std::views::reverse;
+        std::views::drop_while(isSpace) |       // Drop leading whitespace
+        std::views::reverse |                   // Reverse the order of elements
+        std::views::drop_while(isSpace) |       // Drop trailing whitespace
+        std::views::reverse;                    // Reverse back to original order
 
     return std::ranges::to<std::string>(trimmedRange);
 }
@@ -134,10 +224,10 @@ void PowerObfuscator::getElfInfo(const std::string& fileName)
         return;
     }
 
-    std::istringstream ss(result);
+    std::istringstream inStringStream(result);
     std::string line;
 
-    while (std::getline(ss, line))
+    while (std::getline(inStringStream, line))
     {
         if (line.contains("File Class:"))
         {
@@ -214,7 +304,7 @@ void PowerObfuscator::getSectionInfo(const std::string& fileName)
 
         lineStream >> section.index;
         lineStream >> section.name;
-        lineStream >> std::hex >> section.size; 
+        lineStream >> std::hex >> section.size;
         lineStream >> section.type;
         lineStream >> std::hex >> section.address;
 

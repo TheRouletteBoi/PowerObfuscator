@@ -40,7 +40,7 @@ struct SectionInfo
 {
     int index;
     std::string name;
-    std::uint32_t size; // FIXME(Roulette): This should be std::string because some sizes have parentheses. Specifically .bss segment so if you have a bug when reading .bss it's because of this code
+    std::uint32_t size; // FIXME(Roulette): This should be std::string because some sizes have parentheses. Specifically .bss segment so if you encounter a bug when reading .bss it's because of this code
     std::string type;
     std::uint32_t address;
 };
@@ -74,7 +74,7 @@ public:
 
 public: 
     /***
-    * @breif calls a terminal command then returns the result
+    * @brief calls a terminal command then returns the result
     */
     std::string systemResult(const char* cmd);
     /***
@@ -85,6 +85,9 @@ public:
     void getSectionInfo(const std::string& fileName);
     void getSizeStatistics(const std::string& fileName);
     void getSymbolInfo(const std::string& fileName);
+    void obfuscateSegment(const QString& segmentName, uint8_t* byteArray);
+    uint32_t geBinaryOffsetFromSegment(const QString& segmentName);
+    void saveObfuscatedFile(uint8_t* byteArray);
 
 public slots:
     void openFile(const QString& fileName);
@@ -105,4 +108,8 @@ private:
     std::vector<SectionInfo> m_sections;
     SizeStatistics m_sizeStats;
     std::vector<SymbolInfo> m_symbolsInfo;
+    QFile m_qFile;
+    QFileInfo m_qFileInfo;
+    QDataStream m_qDataStream;
+    QByteArray m_qBytesArray;
 };
