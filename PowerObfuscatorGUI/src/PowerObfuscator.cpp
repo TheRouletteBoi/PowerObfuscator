@@ -70,6 +70,14 @@ void PowerObfuscator::on_obfuscateButton_clicked()
     encryptPassphrase(passPhraseString.toStdString(), "PowerObfuscator", keyBytes);
 
     ui.outputTextEdit->append("----- Starting prx obfuscation -----");
+
+    if (m_sections.size() <= 1)
+    {
+        ui.outputTextEdit->append("ERROR: Unable to encrypt prx, No segments found.");
+        m_qFile.close();
+        return;
+    }
+
     ui.outputTextEdit->append("Reading file buffer");
 
     // Read file buffer
@@ -122,6 +130,14 @@ void PowerObfuscator::on_deobfuscateButton_clicked()
         return;
 
     ui.outputTextEdit->append("----- Starting prx deobfuscation -----");
+
+    if (m_sections.size() <= 1)
+    {
+        ui.outputTextEdit->append("ERROR: Unable to encrypt prx, No segments found.");
+        m_qFile.close();
+        return;
+    }
+
     ui.outputTextEdit->append("Reading file buffer");
 
     // Read file buffer
