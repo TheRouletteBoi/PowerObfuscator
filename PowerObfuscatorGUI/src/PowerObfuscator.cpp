@@ -11,7 +11,7 @@ PowerObfuscator::~PowerObfuscator()
 
 void PowerObfuscator::on_loadPrxButton_clicked()
 {
-    const QString fileName = QFileDialog::getOpenFileName(this, "Open PRX File", m_currentDir.absolutePath(), "PRX File (*.prx)");
+    const QString fileName = QFileDialog::getOpenFileName(this, "Open PRX File", m_currentDir.absolutePath(), "PRX File (*.prx *.bin)");
 
     if (fileName.isEmpty())
         return;
