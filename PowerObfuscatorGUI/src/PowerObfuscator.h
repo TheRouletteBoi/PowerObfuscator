@@ -85,9 +85,11 @@ public:
     void getSectionInfo(const std::string& fileName);
     void getSizeStatistics(const std::string& fileName);
     void getSymbolInfo(const std::string& fileName);
-    void obfuscateSegment(const QString& segmentName, uint8_t* byteArray);
+    void obfuscateSegment(const QString& segmentName, uint8_t* byteArray, const std::vector<uint8_t>& encryptionKey);
     uint32_t geBinaryOffsetFromSegment(const QString& segmentName);
-    void saveObfuscatedFile(uint8_t* byteArray);
+    void saveObfuscatedFile(const QString& filePrefix, uint8_t* byteArray);
+    void encryptPassphrase(const std::string& passphrase, const std::string& key, std::vector<uint8_t>& encrypted);
+    std::vector<uint8_t> hexStringToBytes(const std::string& hexString);
 
 public slots:
     void openFile(const QString& fileName);

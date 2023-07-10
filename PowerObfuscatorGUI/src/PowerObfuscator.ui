@@ -43,7 +43,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>50</y>
+      <y>140</y>
       <width>80</width>
       <height>30</height>
      </rect>
@@ -55,8 +55,8 @@
    <widget class="QPushButton" name="deobfuscateButton">
     <property name="geometry">
      <rect>
-      <x>100</x>
-      <y>50</y>
+      <x>330</x>
+      <y>140</y>
       <width>80</width>
       <height>30</height>
      </rect>
@@ -65,22 +65,22 @@
      <string>Deobfuscate</string>
     </property>
    </widget>
-   <widget class="QTextEdit" name="keyTextEdit">
+   <widget class="QTextEdit" name="obfuscatePassphraseTextEdit">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>110</y>
-      <width>351</width>
-      <height>41</height>
+      <y>80</y>
+      <width>300</width>
+      <height>51</height>
      </rect>
     </property>
    </widget>
-   <widget class="QLabel" name="keyLabel">
+   <widget class="QLabel" name="obfuscatePassphraseLabel">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>70</y>
-      <width>91</width>
+      <x>10</x>
+      <y>40</y>
+      <width>251</width>
       <height>41</height>
      </rect>
     </property>
@@ -90,7 +90,7 @@
      </font>
     </property>
     <property name="text">
-     <string>Key</string>
+     <string>Obfuscate With Pass-phrase</string>
     </property>
    </widget>
    <widget class="QComboBox" name="filePathComboBox">
@@ -119,7 +119,7 @@
    <widget class="QLabel" name="outputLabel">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>10</x>
       <y>160</y>
       <width>91</width>
       <height>41</height>
@@ -132,6 +132,34 @@
     </property>
     <property name="text">
      <string>Output</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="deobfuscateKeyLabel">
+    <property name="geometry">
+     <rect>
+      <x>330</x>
+      <y>40</y>
+      <width>201</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Deobfuscate With Key</string>
+    </property>
+   </widget>
+   <widget class="QTextEdit" name="deobfuscateKeyTextEdit">
+    <property name="geometry">
+     <rect>
+      <x>330</x>
+      <y>80</y>
+      <width>300</width>
+      <height>51</height>
+     </rect>
     </property>
    </widget>
   </widget>

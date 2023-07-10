@@ -53,6 +53,22 @@ void PowerObfuscator::on_obfuscateButton_clicked()
     if (!m_doesfileExist)
         return;
 
+    QString passPhraseString = ui.obfuscatePassphraseTextEdit->toPlainText();
+    if (passPhraseString.isEmpty())
+    {
+        QMessageBox::critical(this, windowTitle(), "Pass-phrase can not be empty.");
+        return;
+    }
+
+    if (passPhraseString.size() > 64)
+    {
+        QMessageBox::critical(this, windowTitle(), "Pass-phrase is too long.");
+        return;
+    }
+    
+    std::vector<uint8_t> keyBytes;
+    encryptPassphrase(passPhraseString.toStdString(), "PowerObfuscator", keyBytes);
+
     ui.outputTextEdit->append("----- Starting prx obfuscation -----");
     ui.outputTextEdit->append("Reading file buffer");
 
@@ -68,28 +84,68 @@ void PowerObfuscator::on_obfuscateButton_clicked()
     qDebug() << m_fileSize;
 
     // Obfuscate [.text] segment
-    obfuscateSegment(".text", byteArray);
+    obfuscateSegment(".text", byteArray, keyBytes);
 
     // Obfuscate [.sceStub.text] segment
-    obfuscateSegment(".sceStub.text", byteArray);
+    obfuscateSegment(".sceStub.text", byteArray, keyBytes);
 
     // Obfuscate [.rodata] segment
-    obfuscateSegment(".rodata", byteArray);
+    obfuscateSegment(".rodata", byteArray, keyBytes);
 
     // Obfuscate [.data] segment
-    obfuscateSegment(".data", byteArray);
+    obfuscateSegment(".data", byteArray, keyBytes);
 
     // Save obfuscated prx file
-    saveObfuscatedFile(byteArray);
+    saveObfuscatedFile("obf_", byteArray);
 }
 
 void PowerObfuscator::on_deobfuscateButton_clicked()
 {
     if (!m_doesfileExist)
         return;
+
+    QString keyString = ui.deobfuscateKeyTextEdit->toPlainText();
+    if (keyString.isEmpty())
+    {
+        QMessageBox::critical(this, windowTitle(), "Key can not be empty.");
+        return;
+    }
+
+    if (keyString.size() != 64)
+    {
+        QMessageBox::critical(this, windowTitle(), "Key must be 64 bytes long.");
+        return;
+    }
+
+    std::vector<uint8_t> keyBytes = hexStringToBytes(keyString.toStdString());
+    if (keyBytes.empty())
+        return;
+
+    ui.outputTextEdit->append("----- Starting prx deobfuscation -----");
+    ui.outputTextEdit->append("Reading file buffer");
+
+    // Read file buffer
+    std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(m_fileSize);
+    uint8_t* byteArray = buffer.get();
+    int readBytes = m_qDataStream.readRawData(reinterpret_cast<char*>(byteArray), m_fileSize);
+
+    // Deobfuscate [.text] segment
+    obfuscateSegment(".text", byteArray, keyBytes);
+
+    // Deobfuscate [.sceStub.text] segment
+    obfuscateSegment(".sceStub.text", byteArray, keyBytes);
+
+    // Deobfuscate [.rodata] segment
+    obfuscateSegment(".rodata", byteArray, keyBytes);
+
+    // Deobfuscate [.data] segment
+    obfuscateSegment(".data", byteArray, keyBytes);
+
+    // Save deobfuscated prx file
+    saveObfuscatedFile("deobf_", byteArray);
 }
 
-void PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byteArray)
+void PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byteArray, const std::vector<uint8_t>& encryptionKey)
 {
     ui.outputTextEdit->append("Searching for [" + segmentName + "] segment address and size");
 
@@ -124,7 +180,14 @@ void PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byte
     ui.outputTextEdit->append("Encrypting [" + segmentName + "] segment");
     for (uint32_t i = segmentAddress; i < segmentSizeInBinary; i++)
     {
+        /*if (byteArray[i] == 0)
+            continue;*/
+
+        //TODO(Roulette): temporarily here until prx obfuscation is finished
         byteArray[i] = (byteArray[i] ^ 0x69);
+
+        //TODO(Roulette): uncomment this code when prx obfuscation is finished
+        //byteArray[i] = (byteArray[i] ^ encryptionKey[(i - segmentAddress) % encryptionKey.size()]);
     }
 }
 
@@ -143,10 +206,10 @@ uint32_t PowerObfuscator::geBinaryOffsetFromSegment(const QString& segmentName)
     return locationInBinary;
 }
 
-void PowerObfuscator::saveObfuscatedFile(uint8_t* byteArray)
+void PowerObfuscator::saveObfuscatedFile(const QString& filePrefix, uint8_t* byteArray)
 {
     ui.outputTextEdit->append("Saving obfuscated prx file");
-    QString obfuscatedFileName = m_qFileInfo.path() + "/" + "obf_" + m_qFileInfo.fileName();
+    QString obfuscatedFileName = m_qFileInfo.path() + "/" + filePrefix + m_qFileInfo.fileName();
     ui.outputTextEdit->append(obfuscatedFileName);
 
     QFile obfuscatedFile(obfuscatedFileName);
@@ -364,4 +427,34 @@ void PowerObfuscator::getSymbolInfo(const std::string& fileName)
     std::string str = std::format("Entry Point Symbol: {0}\n", (*found).name);
 
     ui.outputTextEdit->append(QString::fromStdString(str));
+}
+
+void PowerObfuscator::encryptPassphrase(const std::string& passphrase, const std::string& key, std::vector<uint8_t>& encrypted)
+{
+    for (size_t i = 0; encrypted.size() < 64; ++i)
+        encrypted.push_back(passphrase[i % passphrase.size()] ^ key[i % key.size()]);
+}
+
+std::vector<uint8_t> PowerObfuscator::hexStringToBytes(const std::string& hexString)
+{
+    std::vector<uint8_t> bytes;
+
+    for (size_t i = 0; i < hexString.length(); i += 2)
+    {
+        std::string byteString = hexString.substr(i, 2);
+
+        // Check if the byteString consists of valid hex characters
+        bool isValidHex = std::all_of(byteString.begin(), byteString.end(), ::isxdigit);
+
+        if (!isValidHex)
+        {
+            QMessageBox::critical(this, windowTitle(), "Key contains invalid hex value.");
+            return {};
+        }
+
+        uint8_t byte = static_cast<uint8_t>(std::stoi(byteString, nullptr, 16));
+        bytes.push_back(byte);
+    }
+
+    return bytes;
 }
