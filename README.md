@@ -4,7 +4,7 @@ PowerObfuscator obfuscate your PS3 .PRX/.SPRX plugins
 # Features
 - Compile Time String Obfuscation
 - Compile Time Hash Generation
-- Compile time Random Number Generator
+- Compile Time Random Number Generator
 - Real Time Function Encryption & Decryption
 - Real Time Memory Address Encryption & Decryption
 - Dump Obfuscation
@@ -29,8 +29,9 @@ PowerObfuscator obfuscate your PS3 .PRX/.SPRX plugins
 
 # Credits
 - andrivet
+- canehaxs
 - cr-lupin
-- Gopro2027
+- gopro2027
 - John Valincius
 - jordywastaken
 - LeFF
