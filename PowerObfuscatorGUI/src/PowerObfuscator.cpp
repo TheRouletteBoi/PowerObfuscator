@@ -36,8 +36,8 @@ void PowerObfuscator::openFile(const QString& fileName)
     getElfInfo(fileNameStdString);
     getSizeStatistics(fileNameStdString);
     getSectionHeaders(fileNameStdString);
+    getSegmentInfo(fileNameStdString, ".lib.ent", m_libEntSegmentInfo); // .rodata.sceResident OR .lib.ent
     getSymbolInfo(fileNameStdString);
-    getSegmentInfo(fileNameStdString, ".lib.ent", m_segmentInfo); // .rodata.sceResident OR .lib.ent
 
     if (!m_qFile.open(QIODevice::ReadWrite))
     {
@@ -108,6 +108,8 @@ void PowerObfuscator::on_obfuscateButton_clicked()
 
     // Save obfuscated prx file
     saveObfuscatedFile("obf_", byteArray);
+
+    PrintPrxKey(keyBytes);
 }
 
 void PowerObfuscator::on_deobfuscateButton_clicked()
@@ -198,9 +200,15 @@ void PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byte
     uint32_t segmentSizeInBinary = segmentAddress + segmentSize;
     qDebug() << "Segment Size with ELF header: " << Qt::hex << Qt::showbase << segmentSizeInBinary;
 
+    MainInfo mainInfo = findMain(byteArray, elfHeaderSize, segmentSizeInBinary);
+
     ui.outputTextEdit->append("Encrypting [" + segmentName + "] segment");
     for (uint32_t i = segmentAddress; i < segmentSizeInBinary; i++)
     {
+        // Skip the main() function
+        if (i >= mainInfo.startWithElfHeader && i <= mainInfo.endWithElfHeader)
+            continue;
+
         /*if (byteArray[i] == 0)
             continue;*/
 
@@ -227,6 +235,66 @@ uint32_t PowerObfuscator::geBinaryOffsetFromSegment(const QString& segmentName)
     return locationInBinary;
 }
 
+MainInfo PowerObfuscator::findMain(uint8_t* byteArray, uint32_t elfHeaderSize, uint32_t textSegmentSize)
+{
+    MainInfo mainInfo{};
+    qDebug() << "-----  Searching for module_start in [.lib.ent] Segment -----";
+
+    // HACK(Roulette): fucking hack to get module entry point via nid hash
+    sys_prx_libent32_t* libEnt = reinterpret_cast<sys_prx_libent32_t*>(m_libEntSegmentInfo.byteData.data());
+
+    uint32_t firstSubroutine = littleToBigEndian(libEnt->libname);
+    uint32_t nidTable = littleToBigEndian(libEnt->nidtable);
+    uint32_t funcTable = littleToBigEndian(libEnt->addtable);
+    int hashIndex = 0;
+
+    qDebug() << "First Subroutine Address: " << Qt::hex << Qt::showbase << firstSubroutine;
+    qDebug() << "Nid Table Address: " << Qt::hex << Qt::showbase << nidTable;
+    qDebug() << "Function Table Address: " << Qt::hex << Qt::showbase << funcTable;
+
+    uint32_t moduleStartNidHash = 0;
+    memcpy(&moduleStartNidHash, byteArray + elfHeaderSize + (nidTable + (hashIndex * 4)), sizeof(uint32_t));
+    moduleStartNidHash = littleToBigEndian(moduleStartNidHash);
+
+    uint32_t moduleStartOpd = 0;
+    memcpy(&moduleStartOpd, byteArray + elfHeaderSize + (funcTable + (hashIndex * 4)), sizeof(uint32_t));
+    moduleStartOpd = littleToBigEndian(moduleStartOpd);
+
+    qDebug() << "module_start nid Hash: " << Qt::hex << Qt::showbase << moduleStartNidHash;
+    qDebug() << "module_start opd Address: " << Qt::hex << Qt::showbase << moduleStartOpd;
+
+    if (moduleStartNidHash == nid_module_start)
+    {
+        uint32_t moduleStartAddress = 0;
+        memcpy(&moduleStartAddress, byteArray + elfHeaderSize + moduleStartOpd, sizeof(uint32_t));
+
+        moduleStartAddress = littleToBigEndian(moduleStartAddress);
+        mainInfo.start = moduleStartAddress;
+        qDebug() << "module_start Address: " << Qt::hex << Qt::showbase << moduleStartAddress;
+
+        moduleStartAddress += elfHeaderSize;
+        mainInfo.startWithElfHeader = moduleStartAddress;
+        qDebug() << "module_start Address with ELF header: " << Qt::hex << Qt::showbase << moduleStartAddress;
+
+        qDebug() << "Searching for end of module_start";
+        for (uint32_t i = moduleStartAddress; i < textSegmentSize; i++)
+        {
+            // find end of function by searching for 'blr' instruction 4E 80 00 20
+            if (byteArray[i] == 0x4E && byteArray[i + 1] == 0x80 && byteArray[i + 2] == 0x00 && byteArray[i + 3] == 0x20)
+            {
+                mainInfo.endWithElfHeader = i + 4;
+                mainInfo.end = (i + 4) - elfHeaderSize;
+
+                // Bytes found
+                qDebug() << "End of function found at offset: " << Qt::hex << Qt::showbase << i;
+                break;
+            }
+        }
+    }
+
+    return mainInfo;
+}
+
 void PowerObfuscator::saveObfuscatedFile(const QString& filePrefix, uint8_t* byteArray)
 {
     ui.outputTextEdit->append("Saving obfuscated prx file");
@@ -243,6 +311,35 @@ void PowerObfuscator::saveObfuscatedFile(const QString& filePrefix, uint8_t* byt
 
         obfuscatedFile.close();
     }
+}
+
+void PowerObfuscator::PrintPrxKey(const std::vector<uint8_t>& keyBytes)
+{
+    ui.outputTextEdit->append("\n----- Use this key in your sprx code -----");
+    std::stringstream ss;
+    ss << "uint8_t key[" << keyBytes.size() << "] = {";
+
+    auto byteView = keyBytes | std::views::transform([](uint8_t byte) {
+        return std::format(" 0x{:02X}", byte);
+    });
+
+    bool firstByte = true;
+    for (const auto& byte : byteView) 
+    {
+        if (!firstByte) 
+        {
+            ss << ", ";
+        }
+        else 
+        {
+            firstByte = false;
+        }
+        ss << byte;
+    }
+
+    ss << " };\n";
+
+    ui.outputTextEdit->append(QString::fromStdString(ss.str()));
 }
 
 std::string PowerObfuscator::systemResult(const char* cmd)
@@ -673,6 +770,7 @@ void PowerObfuscator::getSegmentInfo(const std::string& fileName, const std::str
 
     segmentInfo.byteData = parseHexDump(result);
 
+
     ui.outputTextEdit->append(QString::fromStdString(result));
 }
 
@@ -747,4 +845,14 @@ std::vector<uint8_t> PowerObfuscator::parseHexDump(const std::string& hexDump)
     }
 
     return bytes;
+}
+
+uint32_t PowerObfuscator::bigToLittleEndian(uint32_t value) 
+{
+    return std::endian::native == std::endian::big ? value : std::byteswap(value);
+}
+
+uint32_t PowerObfuscator::littleToBigEndian(uint32_t value) 
+{
+    return std::endian::native == std::endian::big ? value : std::byteswap(value);
 }
