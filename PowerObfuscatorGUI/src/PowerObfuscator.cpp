@@ -35,8 +35,9 @@ void PowerObfuscator::openFile(const QString& fileName)
     std::string fileNameStdString = fileName.toStdString();
     getElfInfo(fileNameStdString);
     getSizeStatistics(fileNameStdString);
-    getSectionInfo(fileNameStdString);
+    getSectionHeaders(fileNameStdString);
     getSymbolInfo(fileNameStdString);
+    getSegmentInfo(fileNameStdString, ".lib.ent", m_segmentInfo); // .rodata.sceResident OR .lib.ent
 
     if (!m_qFile.open(QIODevice::ReadWrite))
     {
@@ -94,6 +95,7 @@ void PowerObfuscator::on_obfuscateButton_clicked()
     // Obfuscate [.text] segment
     obfuscateSegment(".text", byteArray, keyBytes);
 
+#if 0
     // Obfuscate [.sceStub.text] segment
     obfuscateSegment(".sceStub.text", byteArray, keyBytes);
 
@@ -102,6 +104,7 @@ void PowerObfuscator::on_obfuscateButton_clicked()
 
     // Obfuscate [.data] segment
     obfuscateSegment(".data", byteArray, keyBytes);
+#endif
 
     // Save obfuscated prx file
     saveObfuscatedFile("obf_", byteArray);
@@ -148,6 +151,7 @@ void PowerObfuscator::on_deobfuscateButton_clicked()
     // Deobfuscate [.text] segment
     obfuscateSegment(".text", byteArray, keyBytes);
 
+#if 0 
     // Deobfuscate [.sceStub.text] segment
     obfuscateSegment(".sceStub.text", byteArray, keyBytes);
 
@@ -156,6 +160,7 @@ void PowerObfuscator::on_deobfuscateButton_clicked()
 
     // Deobfuscate [.data] segment
     obfuscateSegment(".data", byteArray, keyBytes);
+#endif
 
     // Save deobfuscated prx file
     saveObfuscatedFile("deobf_", byteArray);
@@ -270,8 +275,25 @@ std::string PowerObfuscator::trim(std::string_view str)
     return std::ranges::to<std::string>(trimmedRange);
 }
 
+
 void PowerObfuscator::getElfInfo(const std::string& fileName)
 {
+    /*
+        Target: PS3 PPU
+        ELF header :
+
+        File Class : ELFCLASS64
+        Data Encoding : ELFDATA2MSB
+        Type : ET_SCE_PPURELEXEC
+        Machine : PowerPC64
+        Entry point : 0x0000000000000000
+        Program Header Offset : 0x0000000000000040
+        Section Header Offset : 0x0000000000006468
+        Flags : 0x01000000
+        Number of Program Headers : 3
+        Number of Section Headers : 40
+        Section Header String Index : 26
+    */
     std::string command = "ps3bin.exe --dump-elf-header " + fileName;
     std::string result = systemResult(command.c_str());
 
@@ -337,12 +359,55 @@ void PowerObfuscator::getElfInfo(const std::string& fileName)
     ui.outputTextEdit->append(QString::fromStdString(result));
 }
 
-void PowerObfuscator::getSectionInfo(const std::string& fileName)
+void PowerObfuscator::getSectionHeaders(const std::string& fileName)
 {
+    /*
+        Index Name                      Size           Type                  Address
+        0     SHN_UNDEF                 (0x00000000)   SHT_NULL              0x00000000
+        1     .text                     0x00003014     SHT_PROGBITS          0x00000000
+        2     .rela.text                0x000015D8     SHT_SCE_PPURELA       0x00000000
+        3     .sceStub.text             0x00000080     SHT_PROGBITS          0x00003014
+        4     .rela.sceStub.text        0x000000C0     SHT_SCE_PPURELA       0x00000000
+        5     .lib.ent.top              0x00000004     SHT_PROGBITS          0x000030A0
+        6     .lib.ent                  0x0000001C     SHT_PROGBITS          0x000030A4
+        7     .rela.lib.ent             0x00000030     SHT_SCE_PPURELA       0x00000000
+        8     .lib.ent.btm              0x00000004     SHT_PROGBITS          0x000030C0
+        9     .lib.stub.top             0x00000004     SHT_PROGBITS          0x000030C4
+        10    .lib.stub                 0x0000002C     SHT_PROGBITS          0x000030C8
+        11    .rela.lib.stub            0x00000048     SHT_SCE_PPURELA       0x00000000
+        12    .lib.stub.btm             0x00000004     SHT_PROGBITS          0x000030F4
+        13    .rodata.sceModuleInfo     0x00000034     SHT_PROGBITS          0x000030F8
+        14    .rela.rodata.sceModul...  0x00000078     SHT_SCE_PPURELA       0x00000000
+        15    .rodata.sceResident       0x0000002C     SHT_PROGBITS          0x0000312C
+        16    .rela.rodata.sceResident  0x00000048     SHT_SCE_PPURELA       0x00000000
+        17    .rodata.sceFNID           0x00000010     SHT_PROGBITS          0x00003158
+        18    .rodata                   0x000003F0     SHT_PROGBITS          0x00003168
+        19    .data.sceFStub            0x00000010     SHT_PROGBITS          0x00003560
+        20    .rela.data.sceFStub       0x00000060     SHT_SCE_PPURELA       0x00000000
+        21    .data                     0x00000040     SHT_PROGBITS          0x00003570
+        22    .opd                      0x000002C8     SHT_PROGBITS          0x000035B0
+        23    .rela.opd                 0x000010B0     SHT_SCE_PPURELA       0x00000000
+        24    .toc                      0x00000000     SHT_PROGBITS          0x00003880
+        25    .bss                      (0x00000008)   SHT_NOBITS            0x00003880
+        26    .shstrtab                 0x00000212     SHT_STRTAB            0x00000000
+        27    .symtab                   0x00001C38     SHT_SYMTAB            0x00000000
+        28    .strtab                   0x00004274     SHT_STRTAB            0x00000000
+        29    .debug_aranges            0x000001F0     SHT_PROGBITS          0x00000000
+        30    .debug_pubnames           0x00000A9A     SHT_PROGBITS          0x00000000
+        31    .debug_info               0x00007247     SHT_PROGBITS          0x00000000
+        32    .debug_abbrev             0x0000029B     SHT_PROGBITS          0x00000000
+        33    .debug_line               0x00000776     SHT_PROGBITS          0x00000000
+        34    .debug_str                0x00002AE8     SHT_PROGBITS          0x00000000
+        35    .rela.debug_aranges       0x000005A0     SHT_RELA              0x00000000
+        36    .rela.debug_pubnames      0x00000018     SHT_RELA              0x00000000
+        37    .rela.debug_info          0x00000EA0     SHT_RELA              0x00000000
+        38    .rela.debug_line          0x00000870     SHT_RELA              0x00000000
+        39    .sceversion               0x00000077     SHT_PROGBITS          0x00000000
+    */
     std::string command = "ps3bin.exe --dump-section-headers " + fileName;
     std::string result = systemResult(command.c_str());
 
-    ui.outputTextEdit->append("----- Section Information -----");
+    ui.outputTextEdit->append("----- Section Headers -----");
 
     if (result.contains("ERROR: "))
     {
@@ -381,6 +446,10 @@ void PowerObfuscator::getSectionInfo(const std::string& fileName)
 
 void PowerObfuscator::getSizeStatistics(const std::string& fileName)
 {
+    /*
+        Text Size   Data Size   RO-Data Size  BSS Size    Total       Filename
+        12436       792         1208          8           14444       C:\Users\agent\Documents\GitHub\PowerObfuscator\bin\Debug-PS3\PowerObfuscatorSPRX.prx    
+    */
     std::string command = "ps3bin.exe --dump-sizes " + fileName;
     std::string result = systemResult(command.c_str());
 
@@ -409,6 +478,78 @@ void PowerObfuscator::getSizeStatistics(const std::string& fileName)
 
 void PowerObfuscator::getSymbolInfo(const std::string& fileName)
 {
+    /*
+        Value              Binding      Type         Section          Name
+        0x0000000000000000 Local        Section      .sceversion      .sceversion
+        0x0000000000000000 Local        Object       .rodata          [local to Main_cpp]::pobf::Vx::vxCplEncryptCharKey
+        0x0000000000000000 Local        Object       .lib.ent.top     __begin_of_section_lib_ent
+        0x0000000000000000 Local        Object       .lib.ent.btm     __end_of_section_lib_ent
+        0x0000000000000000 Local        Object       .lib.stub.top    __begin_of_section_lib_stub
+        0x0000000000000000 Local        Object       .lib.stub.btm    __end_of_section_lib_stub
+        0x0000000000000000 Local        Source File  SHN_ABS          /home/kanee/svnwork/ps3-svn/svn/sys/trunk/dinkumware/dinkum-pu/source/memcpy.S
+        0x0000000000000000 Local        Source File  SHN_ABS          /home/kanee/svnwork/ps3-svn/svn/sys/trunk/dinkumware/dinkum-pu/source/sys/lv2/memset.S
+        0x0000000000000000 Local        STT_NOTYPE   .data.sceFStub   _sys_printf.stub_entry
+        0x0000000000000000 Local        Object       .rodata.sceR...  _sce_package_version_sysPrxForUser
+        0x0000000000000000 Global       Function     .text            ThisFuncShouldBeEncrypted001()
+        0x0000000000000000 Global       STT_NOTYPE   .opd             ThisFuncShouldBeEncrypted001()
+        0x0000000000000000 Global       Object       .rodata.sceM...  __psp_moduleinfo
+        0x0000000000000000 Global       Object       .data            gTestEncryptedThreadId
+        0x0000000000000000 Global       Function     .sceStub.text    ._sys_printf
+        0x0000000000000000 Global       STT_NOTYPE   .text            __start__Ztext
+        0x0000000000000000 Global       Object       .bss             pobf::DumpObfuscation::g_EbootStart
+        0x0000000000000000 Global       Object       .lib.stub        _sysPrxForUser_0001_stub_head
+        0x0000000000000004 Local        Object       .rodata          ..LNst._Z28ThisFuncShouldBeEncrypted001v.0
+        0x0000000000000004 Local        STT_NOTYPE   .data.sceFStub   sys_ppu_thread_exit.stub_entry
+        0x0000000000000004 Global       Object       .bss             pobf::DumpObfuscation::g_EbootEnd
+        0x0000000000000004 Global       Object       .rodata.sceR...  _sysPrxForUser_stub_str
+        0x0000000000000008 Local        Object       .data            LS.10.AGGR.CONST._Z28pobf_vxStringEncrypt_Examplev.1
+        0x0000000000000008 Local        STT_NOTYPE   .data.sceFStub   _sys_malloc.stub_entry
+        0x0000000000000008 Global       STT_NOTYPE   .opd             ThisFuncShouldBeEncrypted002(int, int)
+        0x000000000000000C Local        STT_NOTYPE   .data.sceFStub   _sys_free.stub_entry
+        0x0000000000000010 Global       STT_NOTYPE   .opd             ThisFuncShouldBeEncrypted003()
+        0x0000000000000014 Local        STT_NOTYPE   .rodata.sceR...  _NONAMEnid_table
+        0x0000000000000015 Local        Object       .data            LS.13.AGGR.CONST._Z33pobf_AllStringEncryptions_Examplev.1
+        0x0000000000000018 Global       STT_NOTYPE   .opd             MainThread(unsigned long long)
+        0x0000000000000020 Local        STT_NOTYPE   .rodata.sceR...  _NONAMEentry_table
+        0x0000000000000020 Global       STT_NOTYPE   .opd             pobf_CompileTime_RandomInt_Example()
+        0x0000000000000020 Global       Function     .sceStub.text    .sys_ppu_thread_exit
+        0x0000000000000024 Local        Object       .rodata          ..LNst._Z28ThisFuncShouldBeEncrypted001v.1
+        0x0000000000000028 Global       STT_NOTYPE   .opd             pobf_vxRandom1_Example()
+        0x0000000000000030 Local        Object       .rodata          ..LNst._Z28ThisFuncShouldBeEncrypted001v.2
+        0x0000000000000030 Global       STT_NOTYPE   .opd             pobf_vxRandom2_Example()
+        0x0000000000000038 Global       STT_NOTYPE   .opd             pobf_vxHashing_Example()
+        0x000000000000003C Local        Object       .rodata          ..LNst._Z10MainThready.0
+        0x0000000000000040 Global       STT_NOTYPE   .opd             pobf_vxStringEncrypt_Example()
+        0x0000000000000040 Global       Function     .sceStub.text    ._sys_malloc
+        0x0000000000000048 Local        Object       .rodata          ..LNst._Z10MainThready.1
+        0x0000000000000048 Global       STT_NOTYPE   .opd             pobf_AllStringEncryptions_Example()
+        0x0000000000000050 Global       STT_NOTYPE   .opd             pobf_DumpObfuscation_Example()
+        0x0000000000000058 Global       STT_NOTYPE   .opd             size_of_dot_text()
+        0x000000000000005C Local        Object       .rodata          ..LNst._Z34pobf_CompileTime_RandomInt_Examplev.0
+        0x0000000000000060 Global       STT_NOTYPE   .opd             PowerObfuscatorSPRXMain
+        0x0000000000000060 Global       Function     .sceStub.text    ._sys_free
+        0x0000000000000068 Global       STT_NOTYPE   .opd             PowerObfuscatorSPRXStop
+        0x0000000000000070 Weak         STT_NOTYPE   .opd             std::_String_val<char, std::allocator<char>>::_String_val(std::allocator<char>)
+        0x0000000000000078 Weak         STT_NOTYPE   .opd             std::_String_val<char, std::allocator<char>>::_String_val(std::allocator<char>)
+        0x0000000000000080 Local        Object       .rodata          ..LNst._Z34pobf_CompileTime_RandomInt_Examplev.1
+        0x0000000000000080 Weak         STT_NOTYPE   .opd             std::char_traits<char>::copy(char*, char const*, unsigned int)
+        0x0000000000000088 Weak         STT_NOTYPE   .opd             std::allocator<char>::deallocate(char*, unsigned int)
+        0x0000000000000090 Global       Function     .text            ThisFuncShouldBeEncrypted002(int, int)
+        0x0000000000000090 Weak         STT_NOTYPE   .opd             std::basic_string<char, std::char_traits<char>, std::allocator<char>>::_Myptr()
+        0x0000000000000098 Weak         STT_NOTYPE   .opd             std::char_traits<char>::assign(char&, char const&)
+        0x000000000000009C Local        Object       .rodata          ..LNst._Z34pobf_CompileTime_RandomInt_Examplev.2
+        0x00000000000000A0 Weak         STT_NOTYPE   .opd             std::basic_string<char, std::char_traits<char>, std::allocator<char>>::_Eos(unsigned int)
+        0x00000000000000A8 Weak         STT_NOTYPE   .opd             std::basic_string<char, std::char_traits<char>, std::allocator<char>>::_Tidy(bool, unsigned int)
+        0x00000000000000B0 Weak         STT_NOTYPE   .opd             std::_String_base::_Xlen() const
+        0x00000000000000B8 Local        Object       .rodata          ..LNst._Z34pobf_CompileTime_RandomInt_Examplev.3
+        0x00000000000000B8 Weak         STT_NOTYPE   .opd             std::allocator<char>::max_size() const
+        0x00000000000000C0 Weak         STT_NOTYPE   .opd             std::basic_string<char, std::char_traits<char>, std::allocator<char>>::max_size() const
+        0x00000000000000C8 Weak         STT_NOTYPE   .opd             char* std::_Allocate<char>(unsigned int, char*)
+        0x00000000000000D0 Weak         STT_NOTYPE   .opd             std::allocator<char>::allocate(unsigned int)
+        0x00000000000000D8 Local        Object       .rodata          ..LNst._Z34pobf_CompileTime_RandomInt_Examplev.4
+        0x00000000000000D8 Weak         STT_NOTYPE   .opd             std::basic_string<char, std::char_traits<char>, std::allocator<char>>::_Copy(unsigned int, unsigned int)
+        0x00000000000000DC Global       Function     .text            ThisFuncShouldBeEncrypted003()
+    */
     std::string command = "ps3bin.exe --dump-symbols " + fileName;
     std::string result = systemResult(command.c_str());
 
@@ -445,6 +586,96 @@ void PowerObfuscator::getSymbolInfo(const std::string& fileName)
     ui.outputTextEdit->append(QString::fromStdString(str));
 }
 
+void PowerObfuscator::getSegmentInfo(const std::string& fileName, const std::string& segmentName, SegmentInfo& segmentInfo)
+{
+    /*
+        15 - .rodata.sceResident:
+          Type:        SHT_PROGBITS (0x00000001)
+          Flags:       SHF_ALLOC
+          Address:     0x000000000000312C | Offset:      0x000000000000321C
+          Size:        0x000000000000002C | Link:        0x00000000
+          Info:        0x00000000         | Align:       0x0000000000000004
+          Entry Size:  0x0000000000000000
+
+        0x0000312C  00 00 00 00 73 79 73 50 72 78 46 6F 72 55 73 65  ....sysPrxForUse
+        0x0000313C  72 00 00 00 BC 9A 00 86 AB 77 98 74 D7 F4 30 16  r........w.t..0.
+        0x0000314C  00 00 36 10 00 00 36 18 00 00 30 F8              ..6...6...0.
+
+
+        6 - .lib.ent:
+          Type:        SHT_PROGBITS (0x00000001)
+          Flags:       SHF_ALLOC
+          Address:     0x00000000000030A4 | Offset:      0x0000000000003194
+          Size:        0x000000000000001C | Link:        0x00000000
+          Info:        0x00000000         | Align:       0x0000000000000004
+          Entry Size:  0x0000000000000000
+
+        0x000030A4  1C 00 00 00 80 00 00 02 00 01 00 00 00 00 00 00  ................
+        0x000030B4  00 00 00 00 00 00 31 40 00 00 31 4C              ......1@..1L
+    */
+    std::string command = "ps3bin.exe --dump-sections=" + segmentName + " --hex " + fileName;
+    std::string result = systemResult(command.c_str());
+
+    ui.outputTextEdit->append("----- Segment Info -----");
+
+    if (result.contains("ERROR: ") || result.contains("WARNING: "))
+    {
+        ui.outputTextEdit->append(QString::fromStdString(result));
+        return;
+    }
+
+    // Extract section information
+    std::vector<std::string> lines = splitString(result, '\n');
+    for (const std::string& line : lines) 
+    {
+        if (line.contains("Type:")) 
+        {
+            std::vector<std::string> tokens = splitString(line, ':');
+            segmentInfo.type = tokens[1];
+        }
+        else if (line.contains("Flags:")) 
+        {
+            std::vector<std::string> tokens = splitString(line, ':');
+            segmentInfo.flags = tokens[1];
+        }
+        else if (line.contains("Address:")) 
+        {
+            std::vector<std::string> tokens = splitString(line, '|');
+            segmentInfo.address = tokens[0];
+            segmentInfo.offset = tokens[1];
+        }
+        else if (line.contains("Size:")) 
+        {
+            std::vector<std::string> tokens = splitString(line, ':');
+            segmentInfo.size = tokens[1];
+        }
+        else if (line.contains("Link:")) 
+        {
+            std::vector<std::string> tokens = splitString(line, ':');
+            segmentInfo.link = tokens[1];
+        }
+        else if (line.contains("Info:")) 
+        {
+            std::vector<std::string> tokens = splitString(line, ':');
+            segmentInfo.info = tokens[1];
+        }
+        else if (line.contains("Align:")) 
+        {
+            std::vector<std::string> tokens = splitString(line, ':');
+            segmentInfo.align = tokens[1];
+        }
+        else if (line.contains("Entry Size:")) 
+        {
+            std::vector<std::string> tokens = splitString(line, ':');
+            segmentInfo.entrySize = tokens[1];
+        }
+    }
+
+    segmentInfo.byteData = parseHexDump(result);
+
+    ui.outputTextEdit->append(QString::fromStdString(result));
+}
+
 void PowerObfuscator::encryptPassphrase(const std::string& passphrase, const std::string& key, std::vector<uint8_t>& encrypted)
 {
     for (size_t i = 0; encrypted.size() < 64; ++i)
@@ -470,6 +701,49 @@ std::vector<uint8_t> PowerObfuscator::hexStringToBytes(const std::string& hexStr
 
         uint8_t byte = static_cast<uint8_t>(std::stoi(byteString, nullptr, 16));
         bytes.push_back(byte);
+    }
+
+    return bytes;
+}
+
+std::vector<std::string> PowerObfuscator::splitString(const std::string& str, char delimiter)
+{
+    std::vector<std::string> tokens;
+    std::istringstream inStringStream(str);
+    std::string token;
+    while (std::getline(inStringStream, token, delimiter))
+    {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
+std::vector<uint8_t> PowerObfuscator::parseHexDump(const std::string& hexDump)
+{
+    std::vector<uint8_t> bytes;
+    std::istringstream inStringStream(hexDump);
+    std::string line;
+
+    // Parse the hex values and add them to the byte vector
+    while (std::getline(inStringStream, line))
+    {
+        if (line.substr(0, 2) == "0x")
+        {
+            std::istringstream hexStream(line.substr(10));
+            std::string byteString;
+            while (hexStream >> byteString)
+            {
+                try
+                {
+                    uint8_t byte = static_cast<uint8_t>(std::stoul(byteString, nullptr, 16));
+                    bytes.push_back(byte);
+                }
+                catch (const std::invalid_argument&)
+                {
+                    // Skip non-hexadecimal characters
+                }
+            }
+        }
     }
 
     return bytes;

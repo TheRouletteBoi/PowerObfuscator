@@ -64,6 +64,20 @@ struct SymbolInfo
     std::string name;
 };
 
+struct SegmentInfo
+{
+    std::string type;
+    std::string flags;
+    std::string address;
+    std::string offset;
+    std::string size;
+    std::string link;
+    std::string info;
+    std::string align;
+    std::string entrySize;
+    std::vector<uint8_t> byteData;
+};
+
 class PowerObfuscator : public QMainWindow
 {
     Q_OBJECT
@@ -82,14 +96,17 @@ public:
     */
     std::string trim(std::string_view str);
     void getElfInfo(const std::string& fileName);
-    void getSectionInfo(const std::string& fileName);
+    void getSectionHeaders(const std::string& fileName);
     void getSizeStatistics(const std::string& fileName);
     void getSymbolInfo(const std::string& fileName);
+    void getSegmentInfo(const std::string& fileName, const std::string& segmentName, SegmentInfo& segmentInfo);
     void obfuscateSegment(const QString& segmentName, uint8_t* byteArray, const std::vector<uint8_t>& encryptionKey);
     uint32_t geBinaryOffsetFromSegment(const QString& segmentName);
     void saveObfuscatedFile(const QString& filePrefix, uint8_t* byteArray);
     void encryptPassphrase(const std::string& passphrase, const std::string& key, std::vector<uint8_t>& encrypted);
     std::vector<uint8_t> hexStringToBytes(const std::string& hexString);
+    std::vector<std::string> splitString(const std::string& str, char delimiter);
+    std::vector<uint8_t> parseHexDump(const std::string& hexDump);
 
 public slots:
     void openFile(const QString& fileName);
@@ -109,6 +126,7 @@ private:
     std::vector<SectionInfo> m_sections;
     SizeStatistics m_sizeStats;
     std::vector<SymbolInfo> m_symbolsInfo;
+    SegmentInfo m_segmentInfo;
     QFile m_qFile;
     QFileInfo m_qFileInfo;
     QDataStream m_qDataStream;
