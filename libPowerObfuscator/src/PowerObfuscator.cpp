@@ -429,6 +429,25 @@ namespace pobf
     }
 
 
+    // RAII method 
+    // EG: RealTimeEncryptFunction<decltype(&main)> encrypt(main);
+    namespace EncryptionV3
+    {
+        template <class T>
+        class RealTimeEncryptFunction
+        {
+        public:
+            RealTimeEncryptFunction(T functionAddress)
+            {
+
+            }
+            ~RealTimeEncryptFunction()
+            {
+
+            }
+        };
+    }
+
 
 
 }
