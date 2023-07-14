@@ -770,7 +770,7 @@ void PowerObfuscator::stripSymbolsPrx(const std::string& fileName)
 
 void PowerObfuscator::signPrx(const std::string& inFileName, const std::string& outFileName)
 {
-    std::string command = "SecureTool.exe -a 1070000052000001 -c 1 -e 1 -v 10001000000000000 -t a -k NPD00A -ms " + inFileName + " " + outFileName;
+    std::string command = "SecureTool.exe -c 1 -k APP004 -ms " + inFileName + " " + outFileName;
 
     ui.outputTextEdit->append("Signing prx");
 
