@@ -32,6 +32,10 @@ void PowerObfuscator::openFile(const QString& fileName)
     m_fileSize = m_qFileInfo.size();
     ui.filePathComboBox->addItem(fileName);
 
+    m_sections.clear();
+    m_symbolsInfo.clear();
+    m_qBytesArray.clear();
+
     std::string fileNameStdString = fileName.toStdString();
     getElfInfo(fileNameStdString);
     getSizeStatistics(fileNameStdString);
@@ -79,6 +83,13 @@ void PowerObfuscator::on_obfuscateButton_clicked()
         return;
     }
 
+    if (m_symbolsInfo.empty())
+    {
+        ui.outputTextEdit->append("ERROR: Unable to encrypt prx, No symbol table found.");
+        m_qFile.close();
+        return;
+    }
+
     ui.outputTextEdit->append("Reading file buffer");
 
     // Read file buffer
@@ -107,7 +118,7 @@ void PowerObfuscator::on_obfuscateButton_clicked()
 #endif
 
     // Save obfuscated prx file
-    saveObfuscatedFile("obf_", byteArray);
+    saveFileWithPrefix("obf_", byteArray, true);
 
     PrintPrxKey(keyBytes);
 }
@@ -165,7 +176,7 @@ void PowerObfuscator::on_deobfuscateButton_clicked()
 #endif
 
     // Save deobfuscated prx file
-    saveObfuscatedFile("deobf_", byteArray);
+    saveFileWithPrefix("deobf_", byteArray, false);
 }
 
 void PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byteArray, const std::vector<uint8_t>& encryptionKey)
@@ -209,6 +220,7 @@ void PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byte
         if (i >= mainInfo.startWithElfHeader && i <= mainInfo.endWithElfHeader)
             continue;
 
+        // Skip undefined data
         /*if (byteArray[i] == 0)
             continue;*/
 
@@ -286,7 +298,7 @@ MainInfo PowerObfuscator::findMain(uint8_t* byteArray, uint32_t elfHeaderSize, u
                 mainInfo.end = (i + 4) - elfHeaderSize;
 
                 // Bytes found
-                qDebug() << "End of function found at offset: " << Qt::hex << Qt::showbase << i;
+                qDebug() << "End of function found at offset: " << Qt::hex << Qt::showbase << (i + 4);
                 break;
             }
         }
@@ -295,11 +307,10 @@ MainInfo PowerObfuscator::findMain(uint8_t* byteArray, uint32_t elfHeaderSize, u
     return mainInfo;
 }
 
-void PowerObfuscator::saveObfuscatedFile(const QString& filePrefix, uint8_t* byteArray)
+void PowerObfuscator::saveFileWithPrefix(const QString& filePrefix, uint8_t* byteArray, bool isEncrypted)
 {
     ui.outputTextEdit->append("Saving obfuscated prx file");
     QString obfuscatedFileName = m_qFileInfo.path() + "/" + filePrefix + m_qFileInfo.fileName();
-    ui.outputTextEdit->append(obfuscatedFileName);
 
     QFile obfuscatedFile(obfuscatedFileName);
     if (obfuscatedFile.open(QIODevice::WriteOnly))
@@ -311,6 +322,19 @@ void PowerObfuscator::saveObfuscatedFile(const QString& filePrefix, uint8_t* byt
 
         obfuscatedFile.close();
     }
+
+    if (isEncrypted && ui.stripSymbolsCheckBox->checkState() == Qt::Checked)
+    {
+        stripSymbolsPrx(obfuscatedFileName.toStdString());
+    }
+
+    if (isEncrypted && ui.signPRXCheckBox->checkState() == Qt::Checked)
+    {
+        QString signedPrxFileName = m_qFileInfo.path() + "/" + filePrefix + m_qFileInfo.baseName() + ".sprx";
+        signPrx(obfuscatedFileName.toStdString(), signedPrxFileName.toStdString());
+    }
+
+    ui.outputTextEdit->append(obfuscatedFileName);
 }
 
 void PowerObfuscator::PrintPrxKey(const std::vector<uint8_t>& keyBytes)
@@ -341,37 +365,6 @@ void PowerObfuscator::PrintPrxKey(const std::vector<uint8_t>& keyBytes)
 
     ui.outputTextEdit->append(QString::fromStdString(ss.str()));
 }
-
-std::string PowerObfuscator::systemResult(const char* cmd)
-{
-    std::array<char, 128> buffer;
-    std::string result;
-    std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd, "r"), _pclose);
-
-    if (!pipe)
-        throw std::runtime_error("popen() failed!");
-
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
-        result += buffer.data();
-
-    return result;
-}
-
-std::string PowerObfuscator::trim(std::string_view str)
-{
-    // Lambda function to check if a character is a whitespace character
-    auto isSpace = [](char ch) { return std::isspace(ch); };
-
-    // Create a view of the input string and apply range adaptors
-    auto trimmedRange = str |
-        std::views::drop_while(isSpace) |       // Drop leading whitespace
-        std::views::reverse |                   // Reverse the order of elements
-        std::views::drop_while(isSpace) |       // Drop trailing whitespace
-        std::views::reverse;                    // Reverse back to original order
-
-    return std::ranges::to<std::string>(trimmedRange);
-}
-
 
 void PowerObfuscator::getElfInfo(const std::string& fileName)
 {
@@ -686,19 +679,6 @@ void PowerObfuscator::getSymbolInfo(const std::string& fileName)
 void PowerObfuscator::getSegmentInfo(const std::string& fileName, const std::string& segmentName, SegmentInfo& segmentInfo)
 {
     /*
-        15 - .rodata.sceResident:
-          Type:        SHT_PROGBITS (0x00000001)
-          Flags:       SHF_ALLOC
-          Address:     0x000000000000312C | Offset:      0x000000000000321C
-          Size:        0x000000000000002C | Link:        0x00000000
-          Info:        0x00000000         | Align:       0x0000000000000004
-          Entry Size:  0x0000000000000000
-
-        0x0000312C  00 00 00 00 73 79 73 50 72 78 46 6F 72 55 73 65  ....sysPrxForUse
-        0x0000313C  72 00 00 00 BC 9A 00 86 AB 77 98 74 D7 F4 30 16  r........w.t..0.
-        0x0000314C  00 00 36 10 00 00 36 18 00 00 30 F8              ..6...6...0.
-
-
         6 - .lib.ent:
           Type:        SHT_PROGBITS (0x00000001)
           Flags:       SHF_ALLOC
@@ -772,6 +752,84 @@ void PowerObfuscator::getSegmentInfo(const std::string& fileName, const std::str
 
 
     ui.outputTextEdit->append(QString::fromStdString(result));
+}
+
+void PowerObfuscator::stripSymbolsPrx(const std::string& fileName)
+{
+    std::string command = "ps3bin.exe --strip-all " + fileName;
+    std::string result = systemResult(command.c_str());
+
+    ui.outputTextEdit->append("Stripping symbols");
+
+    if (result.contains("ERROR: ") || result.contains("WARNING: "))
+    {
+        ui.outputTextEdit->append(QString::fromStdString(result));
+        return;
+    }
+}
+
+void PowerObfuscator::signPrx(const std::string& inFileName, const std::string& outFileName)
+{
+    std::string command = "SecureTool.exe -a 1070000052000001 -c 1 -e 1 -v 10001000000000000 -t a -k NPD00A -ms " + inFileName + " " + outFileName;
+
+    ui.outputTextEdit->append("Signing prx");
+
+    systemWin32(command.c_str());
+}
+
+std::string PowerObfuscator::systemResult(const char* cmd)
+{
+    std::array<char, 128> buffer;
+    std::string result;
+    std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd, "r"), _pclose);
+
+    if (!pipe)
+        throw std::runtime_error("popen() failed!");
+
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
+        result += buffer.data();
+
+    return result;
+}
+
+void PowerObfuscator::systemWin32(const char* cmd)
+{
+    // CreateProcess variables
+    STARTUPINFOA si;
+    PROCESS_INFORMATION pi;
+
+    // Initialize the STARTUPINFO structure
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+
+    // Initialize the PROCESS_INFORMATION structure
+    ZeroMemory(&pi, sizeof(pi));
+
+    // Create the process with the CREATE_NO_WINDOW flag
+    if (CreateProcessA(NULL, (LPSTR)cmd, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
+    {
+        // Wait for the process to complete (optional)
+        WaitForSingleObject(pi.hProcess, INFINITE);
+
+        // Close process and thread handles
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+    }
+}
+
+std::string PowerObfuscator::trim(std::string_view str)
+{
+    // Lambda function to check if a character is a whitespace character
+    auto isSpace = [](char ch) { return std::isspace(ch); };
+
+    // Create a view of the input string and apply range adaptors
+    auto trimmedRange = str |
+        std::views::drop_while(isSpace) |       // Drop leading whitespace
+        std::views::reverse |                   // Reverse the order of elements
+        std::views::drop_while(isSpace) |       // Drop trailing whitespace
+        std::views::reverse;                    // Reverse back to original order
+
+    return std::ranges::to<std::string>(trimmedRange);
 }
 
 void PowerObfuscator::encryptPassphrase(const std::string& passphrase, const std::string& key, std::vector<uint8_t>& encrypted)

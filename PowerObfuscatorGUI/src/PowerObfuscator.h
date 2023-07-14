@@ -14,6 +14,8 @@
 #include <algorithm>
 #include <ranges>
 
+#include <Windows.h>
+
 #include <QtWidgets/QMainWindow>
 #include <QDir>
 #include <QFileInfo>
@@ -120,32 +122,58 @@ public:
     ~PowerObfuscator();
 
 public: 
-    /***
-    * @brief calls a terminal command then returns the result
-    */
-    std::string systemResult(const char* cmd);
-    /***
-    * @brief removes white space from text
-    */
-    std::string trim(std::string_view str);
     void getElfInfo(const std::string& fileName);
     void getSectionHeaders(const std::string& fileName);
     void getSizeStatistics(const std::string& fileName);
     void getSymbolInfo(const std::string& fileName);
     void getSegmentInfo(const std::string& fileName, const std::string& segmentName, SegmentInfo& segmentInfo);
+    void stripSymbolsPrx(const std::string& fileName);
+    void signPrx(const std::string& inFileName, const std::string& outFileName);
     void obfuscateSegment(const QString& segmentName, uint8_t* byteArray, const std::vector<uint8_t>& encryptionKey);
     uint32_t geBinaryOffsetFromSegment(const QString& segmentName);
     MainInfo findMain(uint8_t* byteArray, uint32_t elfHeaderSize, uint32_t textSegmentSize);
-    void saveObfuscatedFile(const QString& filePrefix, uint8_t* byteArray);
+    void saveFileWithPrefix(const QString& filePrefix, uint8_t* byteArray, bool isEncrypted);
+
+    /***
+    * @brief calls a terminal command then returns the result
+    */
+    std::string systemResult(const char* cmd);
+
+    /***
+    * @brief calls a terminal command using WIN32 API
+    *
+    * HACK: for some reason when calling SecureTool.exe using system() or _popen() seems to fail so this is a temporary fix
+    */
+    void systemWin32(const char* cmd);
+
+    /***
+    * @brief removes white space from text
+    */
+    std::string trim(std::string_view str);
+
     void encryptPassphrase(const std::string& passphrase, const std::string& key, std::vector<uint8_t>& encrypted);
     void PrintPrxKey(const std::vector<uint8_t>& keyBytes);
+
+    /***
+    * @brief convert 5A5A5A5A5A5A5A5A5A5A5A5A into a uint8_t array
+    */
     std::vector<uint8_t> hexStringToBytes(const std::string& hexString);
+
     std::vector<std::string> splitString(const std::string& str, char delimiter);
+
+    /***
+    * @brief convert hex dump into a uint8_t array
+    * 5A 5A 5A 5A 5A 5A 5A 5A 5A 5A
+    * 5A 5A 5A 5A 5A 5A 5A 5A 5A 5A
+    * 5A 5A 5A 5A 5A 5A 5A 5A 5A 5A
+    */
     std::vector<uint8_t> parseHexDump(const std::string& hexDump);
+
     /***
     * @brief convert a 32-bit integer from big-endian to little-endian
     */
     uint32_t bigToLittleEndian(uint32_t value);
+
     /***
     * @brief convert a 32-bit integer from little-endian to big-endian
     */
