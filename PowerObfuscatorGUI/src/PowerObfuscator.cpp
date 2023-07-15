@@ -103,6 +103,9 @@ void PowerObfuscator::on_obfuscateButton_clicked()
     qDebug() << "File size";
     qDebug() << m_fileSize;
 
+    // Override real pobfHeader values
+    fixHeader(byteArray);
+
     // Obfuscate [.text] segment
     obfuscateSegment(".text", byteArray, keyBytes);
 
@@ -188,6 +191,7 @@ void PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byte
     uint32_t segmentAddress{};
     uint32_t segmentSize{};
 
+    // Get segment address and size
     for (const auto& section : m_sections)
     {
         if (section.name == segmentName.toStdString())
@@ -230,6 +234,88 @@ void PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byte
         //TODO(Roulette): uncomment this code when prx obfuscation is finished
         //byteArray[i] = (byteArray[i] ^ encryptionKey[(i - segmentAddress) % encryptionKey.size()]);
     }
+}
+
+void PowerObfuscator::fixHeader(uint8_t* byteArray)
+{
+    ui.outputTextEdit->append("Replacing Header values");
+
+    // thing to find
+    const QString dataSegmentName = ".data";
+    const QString symbolName = "pobf_header";
+
+    const uint32_t elfHeaderSize = 0xF0;
+
+    uint32_t dataSegmentAddress{};
+    uint32_t dataSegmentSize{};
+
+    // Get .data segment address and size
+    for (const auto& section : m_sections)
+    {
+        if (section.name == ".data")
+        {
+            dataSegmentAddress = section.address;
+            dataSegmentSize = section.size;
+        }
+    }
+
+    uint32_t textSegmentAddress{};
+    uint32_t textSegmentSize{};
+
+    for (const auto& section : m_sections)
+    {
+        if (section.name == ".text")
+        {
+            textSegmentAddress = section.address;
+            textSegmentSize = section.size;
+        }
+    }
+
+    bool wasSymbolFound = false;
+    SymbolInfo symbolInfo = findHeaderBySymbolName(dataSegmentName, symbolName, &wasSymbolFound);
+
+    if (!wasSymbolFound)
+    {
+        ui.outputTextEdit->append("Failed to find symbol " + symbolName + " in [" + dataSegmentName + "] segment");
+        return;
+    }
+
+    //pobfHeader readHeader;
+    //memcpy(&readHeader, byteArray + elfHeaderSize + segmentAddress + symbolInfo.value, sizeof(pobfHeader));
+    //qDebug() << "show symbol info offset";
+    //qDebug() << readHeader.magic[0] << readHeader.magic[1] << readHeader.magic[2] << readHeader.magic[3];
+    //qDebug() << Qt::hex << Qt::showbase << littleToBigEndian(readHeader.textSegmentStart);
+
+    pobfHeader header = {
+        POBF_MAGIC,
+        POBF_SIGNATURE,
+        POBF_TEXT_SEGMENT_DUMMY_VALUES,
+        POBF_DATA_SEGMENT_DUMMY_VALUES,
+        POBF_PLACEHOLDER_DUMMY_VALUES1,
+        POBF_PLACEHOLDER_DUMMY_VALUES2
+    };
+
+    header.textSegmentStart = littleToBigEndian(textSegmentAddress);
+    header.textSegmentSize = littleToBigEndian(textSegmentSize);
+
+    header.dataSegmentStart = littleToBigEndian(dataSegmentAddress);
+    header.dataSegmentSize = littleToBigEndian(dataSegmentSize);
+
+    // rewrite our new header
+    memcpy(byteArray + elfHeaderSize + dataSegmentAddress + symbolInfo.value, &header, sizeof(pobfHeader));
+}
+
+bool PowerObfuscator::SkipOpCode()
+{
+    uint8_t skip[] = {
+        0x30,   // addic
+        0x3C,   // lis
+        0x80,   // lwz
+        //0x61,   // ori
+        //0x64,   // oris
+    };
+
+    return false;
 }
 
 uint32_t PowerObfuscator::geBinaryOffsetFromSegment(const QString& segmentName)
@@ -305,6 +391,25 @@ MainInfo PowerObfuscator::findMain(uint8_t* byteArray, uint32_t elfHeaderSize, u
     }
 
     return mainInfo;
+}
+
+SymbolInfo PowerObfuscator::findHeaderBySymbolName(const QString& segmentName, const QString& symbolName, bool* outFound)
+{
+    ui.outputTextEdit->append("Searching for " + symbolName + " symbol in [" + segmentName + "] segment");
+
+    auto found = std::ranges::find_if(m_symbolsInfo, [&](const SymbolInfo& symInfo) {
+        return (symInfo.binding == "Global") && (symInfo.type == "Object") && (symInfo.section == segmentName.toStdString()) && (symInfo.name == symbolName.toStdString());
+    });
+
+    if (found != m_symbolsInfo.end())
+    {
+        ui.outputTextEdit->append("Found " + symbolName + " symbol in [" + segmentName + "] segment");
+        *outFound = true;
+        return *found;
+    }
+
+    *outFound = false;
+    return {};
 }
 
 void PowerObfuscator::saveFileWithPrefix(const QString& filePrefix, uint8_t* byteArray, bool isEncrypted)
@@ -418,7 +523,7 @@ void PowerObfuscator::getElfInfo(const std::string& fileName)
         }
         else if (line.contains("Entry point:"))
         {
-            m_elfInfo.entryPoint = trim(line.substr(line.find(":") + 2));
+            m_elfInfo.entryPoint = std::stoull(trim(line.substr(line.find(":") + 2)));
         }
         else if (line.contains("Program Header Offset:"))
         {
@@ -661,7 +766,13 @@ void PowerObfuscator::getSymbolInfo(const std::string& fileName)
     {
         std::istringstream lineStream(line);
         SymbolInfo symbolInfo;
-        lineStream >> symbolInfo.value >> symbolInfo.binding >> symbolInfo.type >> symbolInfo.section >> symbolInfo.name;
+
+        lineStream >> std::hex >> symbolInfo.value;
+        lineStream >> symbolInfo.binding;
+        lineStream >> symbolInfo.type;
+        lineStream >> symbolInfo.section;
+        lineStream >> symbolInfo.name;
+
         m_symbolsInfo.push_back(symbolInfo);
     }
 

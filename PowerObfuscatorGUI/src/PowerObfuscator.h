@@ -29,7 +29,7 @@ struct ElfInfo
     std::string dataEncoding;
     std::string type;
     std::string machine;
-    std::string entryPoint;
+    uint64_t entryPoint;
     std::string programHeaderOffset;
     std::string sectionHeaderOffset;
     std::string flags;
@@ -42,9 +42,9 @@ struct SectionInfo
 {
     int index;
     std::string name;
-    std::uint32_t size; // FIXME(Roulette): This should be std::string because some sizes have parentheses. Specifically .bss segment so if you encounter a bug when reading .bss it's because of this code
+    uint32_t size; // FIXME(Roulette): This should be std::string because some sizes have parentheses. Specifically .bss segment so if you encounter a bug when reading .bss it's because of this code
     std::string type;
-    std::uint32_t address;
+    uint32_t address;
 };
 
 struct SizeStatistics
@@ -59,7 +59,7 @@ struct SizeStatistics
 
 struct SymbolInfo
 {
-    std::string value;
+    uint64_t value;         // symbol offset in section
     std::string binding;
     std::string type;
     std::string section;
@@ -87,6 +87,37 @@ struct MainInfo
     uint32_t startWithElfHeader;
     uint32_t endWithElfHeader;
 };
+
+struct pobfHeader
+{
+    char magic[4];
+    uint32_t signature1;
+    uint32_t signature2;
+    uint32_t signature3;
+    uint32_t textSegmentStart;
+    uint32_t textSegmentSize;
+    uint32_t _padding1;
+    uint32_t dataSegmentStart;
+    uint32_t dataSegmentSize;
+    uint32_t _padding2;
+    uint32_t placeHolder1;
+    uint32_t placeHolder2;
+    uint32_t _padding3;
+    uint32_t placeHolder3;
+    uint32_t placeHolder4;
+    uint32_t _padding4;
+    char placeHolder5[60];
+};
+
+#define POBF_MAGIC 'P', 'O', 'B', 'F'
+#define POBF_SIGNATURE littleToBigEndian(0xAABBCCDD), littleToBigEndian(0x12345678), littleToBigEndian(0xEEFFEEFF)
+// these values will be replaced by fixHeader()
+#define POBF_TEXT_SEGMENT_DUMMY_VALUES littleToBigEndian(0xDEADBEEF), littleToBigEndian(0x0BADCAFE), littleToBigEndian(0x00DDBA11) 
+#define POBF_DATA_SEGMENT_DUMMY_VALUES littleToBigEndian(0x5CA1AB1E), littleToBigEndian(0x0DEC0DED), littleToBigEndian(0x00EFFEC7) 
+#define POBF_PLACEHOLDER_DUMMY_VALUES1 littleToBigEndian(0x5E1EC7ED), littleToBigEndian(0x05EEDBED), littleToBigEndian(0x05CABB1E) 
+#define POBF_PLACEHOLDER_DUMMY_VALUES2 littleToBigEndian(0x00FF5E75), littleToBigEndian(0x0001ABE1), littleToBigEndian(0x000F100D) 
+
+
 
 // from #include <sys/prx.h>
 typedef struct sys_prx_libent32_t {
@@ -130,8 +161,16 @@ public:
     void stripSymbolsPrx(const std::string& fileName);
     void signPrx(const std::string& inFileName, const std::string& outFileName);
     void obfuscateSegment(const QString& segmentName, uint8_t* byteArray, const std::vector<uint8_t>& encryptionKey);
+    void fixHeader(uint8_t* byteArray);
+
+    /***
+    * @brief skip specific PowerPC instructions to allow .data/.rodata segment encryption
+    */
+    bool SkipOpCode();
+
     uint32_t geBinaryOffsetFromSegment(const QString& segmentName);
     MainInfo findMain(uint8_t* byteArray, uint32_t elfHeaderSize, uint32_t textSegmentSize);
+    SymbolInfo findHeaderBySymbolName(const QString& segmentName, const QString& symbolName, bool* outFound);
     void saveFileWithPrefix(const QString& filePrefix, uint8_t* byteArray, bool isEncrypted);
 
     /***
