@@ -100,11 +100,11 @@ struct pobfHeader
     uint32_t dataSegmentStart;
     uint32_t dataSegmentSize;
     uint32_t _padding2;
+    uint32_t rodataStart;
+    uint32_t rodataSize;
+    uint32_t _padding3;
     uint32_t placeHolder1;
     uint32_t placeHolder2;
-    uint32_t _padding3;
-    uint32_t placeHolder3;
-    uint32_t placeHolder4;
     uint32_t _padding4;
     char placeHolder5[60];
 };
