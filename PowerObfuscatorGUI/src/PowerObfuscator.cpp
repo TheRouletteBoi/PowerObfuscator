@@ -103,7 +103,7 @@ void PowerObfuscator::on_obfuscateButton_clicked()
     qDebug() << "File size";
     qDebug() << m_fileSize;
 
-    // Override real pobfHeader values
+    // Over write real pobfHeader values
     fixHeader(byteArray);
 
     // Obfuscate [.text] segment
@@ -123,7 +123,7 @@ void PowerObfuscator::on_obfuscateButton_clicked()
     // Save obfuscated prx file
     saveFileWithPrefix("obf_", byteArray, true);
 
-    PrintPrxKey(keyBytes);
+    PrintEncryptionKeyForPrx(keyBytes);
 }
 
 void PowerObfuscator::on_deobfuscateButton_clicked()
@@ -211,49 +211,121 @@ void PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byte
     qDebug() << "Segment Size: " << Qt::hex << Qt::showbase << segmentSize;
 
     segmentAddress += elfHeaderSize;
-    qDebug() << "Segment Address with ELF header: " << Qt::hex << Qt::showbase << segmentAddress;
+    qDebug() << "Segment Address Start with ELF header: " << Qt::hex << Qt::showbase << segmentAddress;
 
-    uint32_t segmentSizeInBinary = segmentAddress + segmentSize;
-    qDebug() << "Segment Size with ELF header: " << Qt::hex << Qt::showbase << segmentSizeInBinary;
+    uint32_t segmentAddressEnd = segmentAddress + segmentSize;
+    qDebug() << "Segment Address End with ELF header: " << Qt::hex << Qt::showbase << segmentAddressEnd;
 
-    MainInfo mainInfo = findMain(byteArray, elfHeaderSize, segmentSizeInBinary);
+    MainInfo mainInfo = findMain(byteArray, elfHeaderSize, segmentAddressEnd);
 
     bool wasPobfHeaderSymbolFound = false;
-    SymbolInfo pobfHeaderSymbol = findHeaderBySymbolName(".data", "pobf_header", &wasPobfHeaderSymbolFound);
+    SymbolInfo pobfHeaderSymbol = findGlobalVariableBySymbolName(".data", "pobf_header", &wasPobfHeaderSymbolFound);
+
+    uint32_t pobfHeaderStart = segmentAddress + pobfHeaderSymbol.value;
+    uint32_t pobfHeaderEnd = segmentAddress + pobfHeaderSymbol.value + sizeof(pobfHeader) + 3;
 
     ui.outputTextEdit->append("Encrypting [" + segmentName + "] segment");
     qDebug() << "now encrypting segment";
-    for (uint32_t i = segmentAddress; i < segmentSizeInBinary; i++)
-    {
-        // Skip undefined data
-        //if (byteArray[i] == 0)
-        //    continue;
 
-        // Skip the main() function
+    for (uint32_t i = segmentAddress; i < segmentAddressEnd; i++)
+    {
+
+#if 0
+        // Skip undefined data
+        if (byteArray[i] == 0)
+            continue;
+#endif
+
         if (segmentName == ".text")
         {
+            // Skip the main() function
             if (i >= mainInfo.startWithElfHeader && i <= mainInfo.endWithElfHeader)
                 continue;
+
+            // Skip instructions with string references 
+            //if (skipInstructionsWithStringOrPointerReference(byteArray, segmentAddress, segmentAddressEnd, mainInfo, i))
+            //    continue;
+
+            if (skipLast2Bytes(i))
+                continue;
         }
-        
+
         // Skip pobf_header structure
         if (segmentName == ".data" && wasPobfHeaderSymbolFound)
         {
-            uint32_t headerStart = segmentAddress + pobfHeaderSymbol.value;
-            uint32_t headerEnd = segmentAddress + pobfHeaderSymbol.value + sizeof(pobfHeader) + 3;
-            if (i >= headerStart && i <= headerEnd)
-                continue; 
+            if (i >= pobfHeaderStart && i <= pobfHeaderEnd)
+                continue;
         }
 
 
         //TODO(Roulette): temporarily here until prx obfuscation is finished
         byteArray[i] = (byteArray[i] ^ 0x69);
 
-        //qDebug() << Qt::hex << Qt::showbase << byteArray[i] << "at" << Qt::hex << Qt::showbase << i;
-
         //TODO(Roulette): uncomment this code when prx obfuscation is finished
         //byteArray[i] = (byteArray[i] ^ encryptionKey[(i - segmentAddress) % encryptionKey.size()]);
     }
+}
+
+bool PowerObfuscator::skipLast2Bytes(uint32_t iterator)
+{
+    // from 0 to 3
+    bool isThirdByte = (iterator % 4) == 2;
+    bool isFourthByte = (iterator % 4) == 3;
+
+    if (isThirdByte || isFourthByte)
+        return true;
+
+    return false;
+}
+
+bool PowerObfuscator::skipInstructionsWithStringOrPointerReference(uint8_t* byteArray, uint32_t textSegmentStart, uint32_t textSegmentEnd, MainInfo& mainInfo, uint32_t offsetToCompare)
+{
+    std::vector<uint32_t> offsetsToSkip;
+
+    if (offsetsToSkip.empty())
+    {
+        // in powerpc64 instructions are 4 bytes in length
+        for (uint32_t i = textSegmentStart; i < textSegmentStart; i += 4)
+        {
+            // Skip the main() function
+            if (i >= mainInfo.startWithElfHeader && i <= mainInfo.endWithElfHeader)
+                continue;
+
+            // read instruction
+            uint32_t entireInstruction = 0;
+            memcpy(&entireInstruction, byteArray + i, sizeof(uint32_t));
+            entireInstruction = littleToBigEndian(entireInstruction);
+            //qDebug() << Qt::hex << Qt::showbase << entireInstruction;
+
+            uint8_t opCode = entireInstruction >> 24; // get the first byte of the instruction
+
+            const uint8_t skipOpCodes[] = {
+                0x30,   // addic
+                0x3C,   // lis
+                0x80,   // lwz
+                //0x61,   // ori
+                //0x64,   // oris
+            };
+
+            if (opCode == 0x30 // addic
+                || opCode == 0x3C // lis
+                || opCode == 0x80) // lwz
+            {
+                // save offset of the last 2 bytes in the instruction
+                offsetsToSkip.push_back(i + 2);
+                offsetsToSkip.push_back(i + 3);
+            }
+        }
+    }
+
+    // skip the last 2 bytes of the instruction 
+    for (const auto& offset : offsetsToSkip)
+    {
+        if (offsetToCompare == offset)
+            return true;
+    }
+
+    return false;
 }
 
 void PowerObfuscator::fixHeader(uint8_t* byteArray)
@@ -306,7 +378,7 @@ void PowerObfuscator::fixHeader(uint8_t* byteArray)
     }
 
     bool wasSymbolFound = false;
-    SymbolInfo symbolInfo = findHeaderBySymbolName(dataSegmentName, symbolName, &wasSymbolFound);
+    SymbolInfo symbolInfo = findGlobalVariableBySymbolName(dataSegmentName, symbolName, &wasSymbolFound);
 
     if (!wasSymbolFound)
     {
@@ -342,19 +414,6 @@ void PowerObfuscator::fixHeader(uint8_t* byteArray)
     memcpy(byteArray + elfHeaderSize + dataSegmentAddress + symbolInfo.value, &header, sizeof(pobfHeader));
 }
 
-bool PowerObfuscator::SkipOpCode()
-{
-    uint8_t skip[] = {
-        0x30,   // addic
-        0x3C,   // lis
-        0x80,   // lwz
-        //0x61,   // ori
-        //0x64,   // oris
-    };
-
-    return false;
-}
-
 uint32_t PowerObfuscator::geBinaryOffsetFromSegment(const QString& segmentName)
 {
     uint32_t locationInBinary{};
@@ -370,7 +429,7 @@ uint32_t PowerObfuscator::geBinaryOffsetFromSegment(const QString& segmentName)
     return locationInBinary;
 }
 
-MainInfo PowerObfuscator::findMain(uint8_t* byteArray, uint32_t elfHeaderSize, uint32_t textSegmentSize)
+MainInfo PowerObfuscator::findMain(uint8_t* byteArray, uint32_t elfHeaderSize, uint32_t textSegmentEnd)
 {
     MainInfo mainInfo{};
     qDebug() << "-----  Searching for module_start in [.lib.ent] Segment -----";
@@ -412,7 +471,7 @@ MainInfo PowerObfuscator::findMain(uint8_t* byteArray, uint32_t elfHeaderSize, u
         qDebug() << "module_start Address with ELF header: " << Qt::hex << Qt::showbase << moduleStartAddress;
 
         qDebug() << "Searching for end of module_start";
-        for (uint32_t i = moduleStartAddress; i < textSegmentSize; i++)
+        for (uint32_t i = moduleStartAddress; i < textSegmentEnd; i++)
         {
             // find end of function by searching for 'blr' instruction 4E 80 00 20
             if (byteArray[i] == 0x4E && byteArray[i + 1] == 0x80 && byteArray[i + 2] == 0x00 && byteArray[i + 3] == 0x20)
@@ -430,7 +489,7 @@ MainInfo PowerObfuscator::findMain(uint8_t* byteArray, uint32_t elfHeaderSize, u
     return mainInfo;
 }
 
-SymbolInfo PowerObfuscator::findHeaderBySymbolName(const QString& segmentName, const QString& symbolName, bool* outFound)
+SymbolInfo PowerObfuscator::findGlobalVariableBySymbolName(const QString& segmentName, const QString& symbolName, bool* outFound)
 {
     ui.outputTextEdit->append("Searching for " + symbolName + " symbol in [" + segmentName + "] segment");
 
@@ -479,7 +538,7 @@ void PowerObfuscator::saveFileWithPrefix(const QString& filePrefix, uint8_t* byt
     ui.outputTextEdit->append(obfuscatedFileName);
 }
 
-void PowerObfuscator::PrintPrxKey(const std::vector<uint8_t>& keyBytes)
+void PowerObfuscator::PrintEncryptionKeyForPrx(const std::vector<uint8_t>& keyBytes)
 {
     ui.outputTextEdit->append("\n----- Use this key in your sprx code -----");
     std::stringstream ss;
@@ -918,11 +977,18 @@ void PowerObfuscator::stripSymbolsPrx(const std::string& fileName)
 
 void PowerObfuscator::signPrx(const std::string& inFileName, const std::string& outFileName)
 {
-    std::string command = "SecureTool.exe -c 1 -k APP004 -ms " + inFileName + " " + outFileName;
+    //std::string command = "scetool.exe -0 SELF -1 TRUE -s FALSE -2 0A -3 1070000052000001 -4 01000002 -5 APP -6 0003004000000000 -A 0001000000000000 --self-ctrl-flags 4000000000000000000000000000000000000000000000000000000000000002 -e " + inFileName + " " + outFileName;
+    //std::string command = "scetool --sce-type=SELF --compress-data=TRUE --skip-sections=FALSE --key-revision=04 --self-ctrl-flags=4000000000000000000000000000000000000000000000000000000000000002 --self-auth-id=1010000001000003 --self-add-shdrs=TRUE --self-vendor-id=01000002 --self-app-version=0001000000000000 --self-type=APP --self-fw-version=0003004000000000 --encrypt " + inFileName + " " + outFileName;
+
+    std::string command = "powershell.exe -Command \"./scetool.exe -0 SELF -1 TRUE -s FALSE -2 0A -3 1070000052000001 -4 01000002 -5 APP -6 0003004000000000 -A 0001000000000000 --self-ctrl-flags 4000000000000000000000000000000000000000000000000000000000000002 -e " + inFileName + " " + outFileName + "\"";
+    systemResult(command.c_str());
+
+    qDebug() << command;
+
 
     ui.outputTextEdit->append("Signing prx");
 
-    systemWin32(command.c_str());
+    //systemWin32(command.c_str());
 }
 
 std::string PowerObfuscator::systemResult(const char* cmd)
