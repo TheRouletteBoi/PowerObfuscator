@@ -41,9 +41,11 @@ PowerObfuscator obfuscate your PS3 .PRX/.SPRX plugins
 
 ![header includes](https://github.com/TheRouletteBoi/PowerObfuscator/blob/master/Assets/Screenshots/headerincludes.png)
 
-13. TODO main() screenshot
-14. TODO your code example
-15. TODO show how to use app. example, symbol stripping, sign prx if you want to covert .prx to .sprx
+
+# Tutorial
+1. TODO main() screenshot
+2. TODO your code example
+3. TODO show how to use app. example, symbol stripping, sign prx if you want to covert .prx to .sprx
 
 
  
