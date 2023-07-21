@@ -72,8 +72,6 @@
   <ItemGroup>
     <ClInclude Include="Defines.h" />
     <ClInclude Include="DumpObfuscation\DumpObfuscation.h" />
-    <ClInclude Include="Memory\Memory.h" />
-    <ClInclude Include="Module\Module.h" />
     <ClInclude Include="PowerObfuscator.h" />
   </ItemGroup>
   <Import Condition="'$(ConfigurationType)' == 'Makefile' and Exists('$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets')" Project="$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets" />

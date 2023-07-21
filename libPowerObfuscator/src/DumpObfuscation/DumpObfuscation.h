@@ -26,82 +26,82 @@ namespace pobf
         * @brief set the eboot start and end address
         * @note This function must be called before any of the other DumpObfuscation functions
         */
-        void POBF_API SetEbootRange(uint32_t ebootStartAddress, uint32_t ebootEndAddress);
+        void SetEbootRange(uint32_t ebootStartAddress, uint32_t ebootEndAddress);
 
         /**
         * @brief Replaces all 'li r3, 0' instructions with 'lis r3, 0'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        void POBF_API ReplaceLisR3();
+        void ReplaceLisR3();
 
         /**
         * @brief Replaces all 'li r4, 0' instructions with 'lis r4, 0'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        void POBF_API ReplaceLisR4();
+        void ReplaceLisR4();
 
         /**
         * @brief Replaces all 'li r5, 0' instructions with 'lis r5, 0'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        void POBF_API ReplaceLisR5();
+        void ReplaceLisR5();
 
         /**
         * @brief Replaces all 'li r6, 0' instructions with 'lis r6, 0'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        void POBF_API ReplaceLisR6();
+        void ReplaceLisR6();
 
         /**
         * @brief Replaces all 'li r7, 0' instructions with 'lis r7, 0'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        void POBF_API ReplaceLisR7();
+        void ReplaceLisR7();
 
         /**
         * @brief Replaces all 'li r3, 0' instructions with 'xor r3, r5, r5'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        void POBF_API ReplaceXorR3();
+        void ReplaceXorR3();
 
         /**
         * @brief Replaces all 'li r4, 0' instructions with 'xor r4, r5, r5'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        void POBF_API ReplaceXorR4();
+        void ReplaceXorR4();
 
         /**
         * @brief Replaces all 'li r5, 0' instructions with 'xor, r5, r5, r5'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        void POBF_API ReplaceXorR5();
+        void ReplaceXorR5();
 
         /**
         * @brief Replaces all 'li r6, 0' instructions with 'xor r6, r5, r5'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        void POBF_API ReplaceXorR6();
+        void ReplaceXorR6();
 
         /**
         * @brief Replaces all 'li r7, 0' instructions with 'xor, r7, r5, r5'
         * @note If anyone tries to dump the game memory they will need to replace all these instruction in the dump if compared to the original eboot.
         * All this does is slow down the attacker.
         */
-        void POBF_API ReplaceXorR7();
+        void ReplaceXorR7();
 
         /**
-        * @brief Replace instactions by type. Using enum DumpObfuscation::Type
+        * @brief Replace instructions by type. Using enum DumpObfuscation::Type
         */
-        void POBF_API ReplaceByType(uint32_t type);
+        void ReplaceByType(uint32_t type);
     }
 }
 

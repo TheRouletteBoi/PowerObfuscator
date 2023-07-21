@@ -177,15 +177,15 @@ extern "C" int PowerObfuscatorSPRXMain(int argc, char* argv[])
     ////////// .data segment ////////////////////
 
     uint32_t dataSegmentStart = dataSegemnt;
-    uint32_t dataSegmentEnd = dataSegemnt + pobf_header.dataSegmentSize;
+    uint32_t dataSegmentEnd = dataSegemnt + pobf::pobf_header.dataSegmentSize;
     
-    uint32_t headerStart = (uint32_t)&pobf_header;
-    uint32_t headerEnd = headerStart + sizeof(pobfHeader) + 3;
+    uint32_t headerStart = (uint32_t)&pobf::pobf_header;
+    uint32_t headerEnd = headerStart + sizeof(pobf::pobfHeader) + 3;
 
     // decrypt .data segment
     for (uint32_t i = dataSegmentStart; i < dataSegmentEnd; i++)
     {
-        // skip pobf header
+        // skip pobf_header
         if (i >= headerStart && i <= headerEnd)
             continue;
 
@@ -195,14 +195,14 @@ extern "C" int PowerObfuscatorSPRXMain(int argc, char* argv[])
         uint8_t unencryptByte = byte ^ 0x69;
         //printf("encryptedByte 0x%X unencryptByte 0x%02X at 0x%X\n", byte, unencryptByte, i);
 
-        pobf::EncryptV3::_write_process_memory((void*)i, &unencryptByte, sizeof(uint8_t));
+        pobf::Encrypt::_write_process_memory((void*)i, &unencryptByte, sizeof(uint8_t));
     }
 
 
     //////////// .rodata segment ////////////////////
 
     uint32_t rodataSegmentStart = rodataSegment;
-    uint32_t rodataSegmentEnd = rodataSegment + pobf_header.rodataSegmentSize;
+    uint32_t rodataSegmentEnd = rodataSegment + pobf::pobf_header.rodataSegmentSize;
 
     // decrypt .rodata segment
     for (uint32_t i = rodataSegmentStart; i < rodataSegmentEnd; i++)
@@ -213,7 +213,7 @@ extern "C" int PowerObfuscatorSPRXMain(int argc, char* argv[])
         uint8_t unencryptByte = byte ^ 0x69;
         //printf("encryptedByte 0x%X unencryptByte 0x%02X at 0x%X\n", byte, unencryptByte, i);
 
-        pobf::EncryptV3::_write_process_memory((void*)i, &unencryptByte, sizeof(uint8_t));
+        pobf::Encrypt::_write_process_memory((void*)i, &unencryptByte, sizeof(uint8_t));
     }
 
 
@@ -232,12 +232,12 @@ extern "C" int PowerObfuscatorSPRXMain(int argc, char* argv[])
     printf("headerEnd 0x%X\n", headerEnd);
 
     uint32_t textSegmentStart = textSegment;
-    uint32_t textSegmentEnd = textSegment + pobf_header.textSegmentSize;
+    uint32_t textSegmentEnd = textSegment + pobf::pobf_header.textSegmentSize;
     printf("textSegmentStart 0x%X\n", textSegmentStart);
     printf("textSegmentEnd 0x%X\n", textSegmentEnd);
 
     uint32_t mainStart = ((pobf::opd_s*)PowerObfuscatorSPRXMain)->func;
-    uint32_t mainEnd = pobf::EncryptV3::FindEndOfMain(mainStart, textSegmentEnd);
+    uint32_t mainEnd = pobf::Encrypt::FindEndOfMain(mainStart, textSegmentEnd);
     printf("mainStart 0x%X\n", mainStart);
     printf("mainEnd 0x%X\n", mainEnd);
 
@@ -249,11 +249,11 @@ extern "C" int PowerObfuscatorSPRXMain(int argc, char* argv[])
             continue;
 
 #if 0
-        if (pobf::EncryptV3::skipInstructionsWithStringOrPointerReference(textSegmentStart, textSegmentEnd, mainStart, mainEnd, i))
+        if (pobf::Encrypt::SkipInstructionsWithStringOrPointerReference(textSegmentStart, textSegmentEnd, mainStart, mainEnd, i))
             continue;
 #endif
 
-        if (pobf::EncryptV3::skipLast2Bytes(i))
+        if (pobf::Encrypt::SkipLast2Bytes(i))
             continue;
 
         // read 1 byte at a time
@@ -262,7 +262,7 @@ extern "C" int PowerObfuscatorSPRXMain(int argc, char* argv[])
         uint8_t unencryptByte = byte ^ 0x69;
         //printf("encryptedByte 0x%X unencryptByte 0x%02X at 0x%X\n", byte, unencryptByte, i);
 
-        pobf::EncryptV3::_write_process_memory((void*)i, &unencryptByte, sizeof(uint8_t));
+        pobf::Encrypt::_write_process_memory((void*)i, &unencryptByte, sizeof(uint8_t));
     }
 
     sys_ppu_thread_create(&gTestEncryptedThreadId, MainThread, 0, 3000, 8192, SYS_PPU_THREAD_CREATE_JOINABLE, "TestEncryptedThread");

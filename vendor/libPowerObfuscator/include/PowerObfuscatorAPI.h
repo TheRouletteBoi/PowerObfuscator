@@ -17,41 +17,11 @@ extern unsigned char const __start__Zrodata[];
 
 #define POBF_MAGIC 'P', 'O', 'B', 'F'
 #define POBF_SIGNATURE 0xAABBCCDD, 0x12345678, 0xEEFFEEFF 
-// these values will be replaced by the real values using PowerObfuscatorGUI
+/* these values will be replaced by the real values using PowerObfuscatorGUI */
 #define POBF_TEXT_SEGMENT_DUMMY_VALUES 0xDEADBEEF, 0x0BADCAFE, 0x00DDBA11 
 #define POBF_DATA_SEGMENT_DUMMY_VALUES 0x5CA1AB1E, 0x0DEC0DED, 0x00EFFEC7 
 #define POBF_PLACEHOLDER_DUMMY_VALUES1 0x5E1EC7ED, 0x05EEDBED, 0x05CABB1E 
 #define POBF_PLACEHOLDER_DUMMY_VALUES2 0x00FF5E75, 0x0001ABE1, 0x000F100D 
-
-struct pobfHeader
-{
-    char magic[4];
-    uint32_t signature1;
-    uint32_t signature2;
-    uint32_t signature3;
-    uint32_t textSegmentStart;
-    uint32_t textSegmentSize;
-    uint32_t _padding1;
-    uint32_t dataSegmentStart;
-    uint32_t dataSegmentSize;
-    uint32_t _padding2;
-    uint32_t rodataSegmentStart;
-    uint32_t rodataSegmentSize;
-    uint32_t _padding3;
-    uint32_t placeHolder1;
-    uint32_t placeHolder2;
-    uint32_t _padding4;
-    char placeHolder5[60];
-};
-
-pobfHeader pobf_header = {
-    POBF_MAGIC,
-    POBF_SIGNATURE,
-    POBF_TEXT_SEGMENT_DUMMY_VALUES,
-    POBF_DATA_SEGMENT_DUMMY_VALUES,
-    POBF_PLACEHOLDER_DUMMY_VALUES1,
-    POBF_PLACEHOLDER_DUMMY_VALUES2
-};
 
 namespace pobf
 {
@@ -68,56 +38,37 @@ namespace pobf
         bool found;
     };
 
-    namespace EncryptV1
+    struct pobfHeader
     {
-        extern char PRIV_API_KEY[];
-        extern int EXPORTS_TOC[];
+        char magic[4];
+        uint32_t signature1;
+        uint32_t signature2;
+        uint32_t signature3;
+        uint32_t textSegmentStart;
+        uint32_t textSegmentSize;
+        uint32_t _padding1;
+        uint32_t dataSegmentStart;
+        uint32_t dataSegmentSize;
+        uint32_t _padding2;
+        uint32_t rodataSegmentStart;
+        uint32_t rodataSegmentSize;
+        uint32_t _padding3;
+        uint32_t placeHolder1;
+        uint32_t placeHolder2;
+        uint32_t _padding4;
+        char placeHolder5[60];
+    };
 
-        void     SetApiKey(uint32_t key);
-        uint32_t MixTimeSeed(clock_t a, time_t b, sys_pid_t c);
-        void     todo_SeedRandom(uint32_t seed);
-        int      todo_Random();
-        uint32_t StringToHash32(const char* str);
-        void     Start(int suppressParameter);
-        void     DecryptAll();
-        void     DecryptTextSegment(uint32_t function);
-        void     DecryptDataSegment();
-        bool     Skip(uint32_t instruction);
-    }
+    pobfHeader pobf_header = {
+        POBF_MAGIC,
+        POBF_SIGNATURE,
+        POBF_TEXT_SEGMENT_DUMMY_VALUES,
+        POBF_DATA_SEGMENT_DUMMY_VALUES,
+        POBF_PLACEHOLDER_DUMMY_VALUES1,
+        POBF_PLACEHOLDER_DUMMY_VALUES2
+    };
 
-    namespace EncryptV2
-    {
-        bool DataCompare(const uint8_t* pbData, const uint8_t* pbMask, const char* szMask);
-        bool FindPattern(uintptr_t address, uint32_t length, uint8_t step, uint8_t* bytes, const char* mask, uint32_t* foundOffset);
-        void FindPatternsInParallel(uintptr_t address, uint32_t length, std::vector<Pattern>& patterns, std::vector<uint32_t>& foundOffsets);
-        void DecryptFunction(uint8_t* data, uint32_t startIndex, uint32_t endIndex, bool quick = false);
-
-        namespace Default
-        {
-            void __encryptFunctionStart(void* function, bool quick);
-            void _encryptFunctionStart(void* function, bool quick);
-            void __encryptFunctionEnd(void* function, bool quick, bool deleteData = false);
-            void _encryptFunctionEnd(void* function, bool quick, bool deleteData = false);
-        }
-
-        namespace Quick
-        {
-            void __encryptFunctionStart(void* function, uint8_t* saveBuffer, uint32_t* start, uint32_t* end);
-            void _encryptFunctionStart(void* function, uint8_t* saveBuffer, uint32_t* start, uint32_t* end);
-            void _encryptFunctionEnd(uint8_t* saveBuffer, uint32_t start, uint32_t end);
-        }
-
-        namespace Inline
-        {
-            void __encryptFunctionStart(void* function);
-            void _encryptFunctionStart(void* function);
-            void __encryptFunctionEnd(void* function);
-            void _encryptFunctionEnd(void* function);
-        }
-    }
-
-    // mostly header only?? I guess so :)
-    namespace EncryptV3
+    namespace Encrypt
     {
         STATIC_ALWAYS_INLINE sys_pid_t _sys_process_getpid()
         {
@@ -168,7 +119,7 @@ namespace pobf
             return found;
         }
 
-        STATIC_ALWAYS_INLINE bool skipLast2Bytes(uint32_t iterator)
+        STATIC_ALWAYS_INLINE bool SkipLast2Bytes(uint32_t iterator)
         {
             // from 0 to 3
             bool isThirdByte = (iterator % 4) == 2;
@@ -180,7 +131,7 @@ namespace pobf
             return false;
         }
 
-        STATIC_ALWAYS_INLINE bool skipInstructionsWithStringOrPointerReference(uint32_t textSegmentStart, uint32_t textSegmentEnd, uint32_t mainStart, uint32_t mainEnd, uint32_t offsetToCompare)
+        STATIC_ALWAYS_INLINE bool SkipInstructionsWithStringOrPointerReference(uint32_t textSegmentStart, uint32_t textSegmentEnd, uint32_t mainStart, uint32_t mainEnd, uint32_t offsetToCompare)
         {
             // in powerpc64 instructions are 4 bytes in length
             for (uint32_t i = textSegmentStart; i < textSegmentStart; i += 4)
@@ -192,6 +143,7 @@ namespace pobf
                 uint32_t entireInstruction = *(uint32_t*)(i);
                 uint8_t opCode = entireInstruction >> 24; // get the first byte of the instruction
 
+#if 0
                 const uint8_t skipOpCodes[] = {
                     0x30,   // addic
                     0x3C,   // lis
@@ -199,6 +151,7 @@ namespace pobf
                     //0x61,   // ori
                     //0x64,   // oris
                 };
+#endif
 
                 if (opCode == 0x30 // addic
                     || opCode == 0x3C // lis
@@ -214,6 +167,53 @@ namespace pobf
             // ...
 
             return false;
+        }
+
+        // RAII method 
+        // EG: RealTimeEncryptFunction<decltype(&main)> encrypt(main);
+        template <class T>
+        class RealTimeEncryptFunction
+        {
+        public:
+            RealTimeEncryptFunction(T functionAddress)
+            {
+
+            }
+            ~RealTimeEncryptFunction()
+            {
+
+            }
+        };
+    }
+
+    namespace EncryptV2
+    {
+        bool DataCompare(const uint8_t* pbData, const uint8_t* pbMask, const char* szMask);
+        bool FindPattern(uintptr_t address, uint32_t length, uint8_t step, uint8_t* bytes, const char* mask, uint32_t* foundOffset);
+        void FindPatternsInParallel(uintptr_t address, uint32_t length, std::vector<Pattern>& patterns, std::vector<uint32_t>& foundOffsets);
+        void DecryptFunction(uint8_t* data, uint32_t startIndex, uint32_t endIndex, bool quick = false);
+
+        namespace Default
+        {
+            void __encryptFunctionStart(void* function, bool quick);
+            void _encryptFunctionStart(void* function, bool quick);
+            void __encryptFunctionEnd(void* function, bool quick, bool deleteData = false);
+            void _encryptFunctionEnd(void* function, bool quick, bool deleteData = false);
+        }
+
+        namespace Quick
+        {
+            void __encryptFunctionStart(void* function, uint8_t* saveBuffer, uint32_t* start, uint32_t* end);
+            void _encryptFunctionStart(void* function, uint8_t* saveBuffer, uint32_t* start, uint32_t* end);
+            void _encryptFunctionEnd(uint8_t* saveBuffer, uint32_t start, uint32_t end);
+        }
+
+        namespace Inline
+        {
+            void __encryptFunctionStart(void* function);
+            void _encryptFunctionStart(void* function);
+            void __encryptFunctionEnd(void* function);
+            void _encryptFunctionEnd(void* function);
         }
     }
 
@@ -314,9 +314,6 @@ namespace pobf
         */
         void ReplaceByType(uint32_t type);
     }
-
-
-
 
     namespace Vx
     {

@@ -7,8 +7,6 @@
 #undef vector
 #include <vector>
 #include "Defines.h"
-#include "Memory/Memory.h"
-#include "Module/Module.h"
 
 namespace pobf
 {
@@ -25,55 +23,34 @@ namespace pobf
         bool found;
     };
 
-    extern uint32_t g_Seed;
-
-    #define START_PATTERN 0xAABBCCDD, 0x12345678, 0xEEFFEEFF 
-
-    namespace EncryptV1
-    {
-        extern char PRIV_API_KEY[];
-        extern int EXPORTS_TOC[];
-
-        void        POBF_API    SetApiKey(uint32_t key);
-        uint32_t    POBF_API    MixTimeSeed(clock_t a, time_t b, sys_pid_t c);
-        void        POBF_API    todo_SeedRandom(uint32_t seed);
-        int         POBF_API    todo_Random();
-        uint32_t    POBF_API    StringToHash32(const char* str);
-        void        POBF_API    Start(int suppressParameter);
-        void        POBF_API    DecryptAll();
-        void        POBF_API    DecryptTextSegment(uint32_t function);
-        void        POBF_API    DecryptDataSegment();
-        bool        POBF_API    Skip(uint32_t instruction);
-    }
-
     namespace EncryptV2
     {
-        bool POBF_API DataCompare(const uint8_t* pbData, const uint8_t* pbMask, const char* szMask);
-        bool POBF_API FindPattern(uintptr_t address, uint32_t length, uint8_t step, uint8_t* bytes, const char* mask, uint32_t* foundOffset);
-        void POBF_API FindPatternsInParallel(uintptr_t address, uint32_t length, std::vector<Pattern>& patterns, std::vector<uint32_t>& foundOffsets);
-        void POBF_API DecryptFunction(uint8_t* data, uint32_t startIndex, uint32_t endIndex, bool quick = false);
+        bool DataCompare(const uint8_t* pbData, const uint8_t* pbMask, const char* szMask);
+        bool FindPattern(uintptr_t address, uint32_t length, uint8_t step, uint8_t* bytes, const char* mask, uint32_t* foundOffset);
+        void FindPatternsInParallel(uintptr_t address, uint32_t length, std::vector<Pattern>& patterns, std::vector<uint32_t>& foundOffsets);
+        void DecryptFunction(uint8_t* data, uint32_t startIndex, uint32_t endIndex, bool quick = false);
 
         namespace Default
         {
-            void POBF_API __encryptFunctionStart(void* function, bool quick);
-            void POBF_API _encryptFunctionStart(void* function, bool quick);
-            void POBF_API __encryptFunctionEnd(void* function, bool quick, bool deleteData = false);
-            void POBF_API _encryptFunctionEnd(void* function, bool quick, bool deleteData = false);
+            void __encryptFunctionStart(void* function, bool quick);
+            void _encryptFunctionStart(void* function, bool quick);
+            void __encryptFunctionEnd(void* function, bool quick, bool deleteData = false);
+            void _encryptFunctionEnd(void* function, bool quick, bool deleteData = false);
         }
 
         namespace Quick
         {
-            void POBF_API __encryptFunctionStart(void* function, uint8_t* saveBuffer, uint32_t* start, uint32_t* end);
-            void POBF_API _encryptFunctionStart(void* function, uint8_t* saveBuffer, uint32_t* start, uint32_t* end);
-            void POBF_API _encryptFunctionEnd(uint8_t* saveBuffer, uint32_t start, uint32_t end);
+            void __encryptFunctionStart(void* function, uint8_t* saveBuffer, uint32_t* start, uint32_t* end);
+            void _encryptFunctionStart(void* function, uint8_t* saveBuffer, uint32_t* start, uint32_t* end);
+            void _encryptFunctionEnd(uint8_t* saveBuffer, uint32_t start, uint32_t end);
         }
 
         namespace Inline
         {
-            void POBF_API __encryptFunctionStart(void* function);
-            void POBF_API _encryptFunctionStart(void* function);
-            void POBF_API __encryptFunctionEnd(void* function);
-            void POBF_API _encryptFunctionEnd(void* function);
+            void __encryptFunctionStart(void* function);
+            void _encryptFunctionStart(void* function);
+            void __encryptFunctionEnd(void* function);
+            void _encryptFunctionEnd(void* function);
         }
 
         /******* For pattern scanning ********/
