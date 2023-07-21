@@ -163,12 +163,13 @@ public:
     void obfuscateSegment(const QString& segmentName, uint8_t* byteArray, const std::vector<uint8_t>& encryptionKey);
 
     bool skipLast2Bytes(uint32_t iterator);
+
     /***
     * @brief skip the last 2 bytes of these instructions because that's where strings and functions are dynamically loaded 
     */
     bool skipInstructionsWithStringOrPointerReference(uint8_t* byteArray, uint32_t textSegmentStart, uint32_t textSegmentEnd, MainInfo& mainInfo, uint32_t offsetToCompare);
 
-    void fixHeader(uint8_t* byteArray);
+    void fixHeader(uint8_t* byteArray, const QString& segmentNameInSymbol, const QString& symbolName);
     uint32_t geBinaryOffsetFromSegment(const QString& segmentName);
     MainInfo findMain(uint8_t* byteArray, uint32_t elfHeaderSize, uint32_t textSegmentEnd);
     SymbolInfo findGlobalVariableBySymbolName(const QString& segmentName, const QString& symbolName, bool* outFound);
@@ -192,7 +193,7 @@ public:
     std::string trim(std::string_view str);
 
     void encryptPassphrase(const std::string& passphrase, const std::string& key, std::vector<uint8_t>& encrypted);
-    void PrintEncryptionKeyForPrx(const std::vector<uint8_t>& keyBytes);
+    void printEncryptionKeyForPrx(const std::vector<uint8_t>& keyBytes);
 
     /***
     * @brief convert 5A5A5A5A5A5A5A5A5A5A5A5A into a uint8_t array

@@ -104,15 +104,10 @@ void PowerObfuscator::on_obfuscateButton_clicked()
     qDebug() << m_fileSize;
 
     // Over write real pobfHeader values
-    fixHeader(byteArray);
+    fixHeader(byteArray, ".data", "pobf::pobf_header");
 
     // Obfuscate [.text] segment
     obfuscateSegment(".text", byteArray, keyBytes);
-
-#if 0
-    // Obfuscate [.sceStub.text] segment
-    obfuscateSegment(".sceStub.text", byteArray, keyBytes);
-#endif
 
     // Obfuscate [.rodata] segment
     obfuscateSegment(".rodata", byteArray, keyBytes);
@@ -123,12 +118,13 @@ void PowerObfuscator::on_obfuscateButton_clicked()
     // Save obfuscated prx file
     saveFileWithPrefix("obf_", byteArray, true);
 
-    PrintEncryptionKeyForPrx(keyBytes);
+    printEncryptionKeyForPrx(keyBytes);
 }
 
 void PowerObfuscator::on_deobfuscateButton_clicked()
 {
-    /*if (!m_doesfileExist)
+#if 0
+    if (!m_doesfileExist)
         return;
 
     QString keyString = ui.deobfuscateKeyTextEdit->toPlainText();
@@ -167,20 +163,15 @@ void PowerObfuscator::on_deobfuscateButton_clicked()
     // Deobfuscate [.text] segment
     obfuscateSegment(".text", byteArray, keyBytes);
 
-#if 0 
-    // Deobfuscate [.sceStub.text] segment
-    obfuscateSegment(".sceStub.text", byteArray, keyBytes);
-
     // Deobfuscate [.rodata] segment
     obfuscateSegment(".rodata", byteArray, keyBytes);
 
     // Deobfuscate [.data] segment
     obfuscateSegment(".data", byteArray, keyBytes);
-#endif
 
     // Save deobfuscated prx file
     saveFileWithPrefix("deobf_", byteArray, false);
-    */
+#endif
 }
 
 void PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byteArray, const std::vector<uint8_t>& encryptionKey)
@@ -219,13 +210,12 @@ void PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byte
     MainInfo mainInfo = findMain(byteArray, elfHeaderSize, segmentAddressEnd);
 
     bool wasPobfHeaderSymbolFound = false;
-    SymbolInfo pobfHeaderSymbol = findGlobalVariableBySymbolName(".data", "pobf_header", &wasPobfHeaderSymbolFound);
+    SymbolInfo pobfHeaderSymbol = findGlobalVariableBySymbolName(".data", "pobf::pobf_header", &wasPobfHeaderSymbolFound);
 
     uint32_t pobfHeaderStart = segmentAddress + pobfHeaderSymbol.value;
     uint32_t pobfHeaderEnd = segmentAddress + pobfHeaderSymbol.value + sizeof(pobfHeader) + 3;
 
     ui.outputTextEdit->append("Encrypting [" + segmentName + "] segment");
-    qDebug() << "now encrypting segment";
 
     for (uint32_t i = segmentAddress; i < segmentAddressEnd; i++)
     {
@@ -242,9 +232,11 @@ void PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byte
             if (i >= mainInfo.startWithElfHeader && i <= mainInfo.endWithElfHeader)
                 continue;
 
+#if 0
             // Skip instructions with string references 
-            //if (skipInstructionsWithStringOrPointerReference(byteArray, segmentAddress, segmentAddressEnd, mainInfo, i))
-            //    continue;
+            if (skipInstructionsWithStringOrPointerReference(byteArray, segmentAddress, segmentAddressEnd, mainInfo, i))
+                continue;
+#endif
 
             if (skipLast2Bytes(i))
                 continue;
@@ -299,6 +291,7 @@ bool PowerObfuscator::skipInstructionsWithStringOrPointerReference(uint8_t* byte
 
             uint8_t opCode = entireInstruction >> 24; // get the first byte of the instruction
 
+#if 0
             const uint8_t skipOpCodes[] = {
                 0x30,   // addic
                 0x3C,   // lis
@@ -306,6 +299,7 @@ bool PowerObfuscator::skipInstructionsWithStringOrPointerReference(uint8_t* byte
                 //0x61,   // ori
                 //0x64,   // oris
             };
+#endif
 
             if (opCode == 0x30 // addic
                 || opCode == 0x3C // lis
@@ -328,13 +322,9 @@ bool PowerObfuscator::skipInstructionsWithStringOrPointerReference(uint8_t* byte
     return false;
 }
 
-void PowerObfuscator::fixHeader(uint8_t* byteArray)
+void PowerObfuscator::fixHeader(uint8_t* byteArray, const QString& segmentNameInSymbol, const QString& symbolName)
 {
-    ui.outputTextEdit->append("Replacing Header values");
-
-    // thing to find
-    const QString dataSegmentName = ".data";
-    const QString symbolName = "pobf_header";
+    ui.outputTextEdit->append("Replacing Header values so we can use them in our sprx");
 
     const uint32_t elfHeaderSize = 0xF0;
 
@@ -378,19 +368,21 @@ void PowerObfuscator::fixHeader(uint8_t* byteArray)
     }
 
     bool wasSymbolFound = false;
-    SymbolInfo symbolInfo = findGlobalVariableBySymbolName(dataSegmentName, symbolName, &wasSymbolFound);
+    SymbolInfo symbolInfo = findGlobalVariableBySymbolName(segmentNameInSymbol, symbolName, &wasSymbolFound);
 
     if (!wasSymbolFound)
     {
-        ui.outputTextEdit->append("Failed to find symbol " + symbolName + " in [" + dataSegmentName + "] segment");
+        ui.outputTextEdit->append("Failed to find symbol " + symbolName + " in [" + segmentNameInSymbol + "] segment");
         return;
     }
 
-    //pobfHeader readHeader;
-    //memcpy(&readHeader, byteArray + elfHeaderSize + segmentAddress + symbolInfo.value, sizeof(pobfHeader));
-    //qDebug() << "show symbol info offset";
-    //qDebug() << readHeader.magic[0] << readHeader.magic[1] << readHeader.magic[2] << readHeader.magic[3];
-    //qDebug() << Qt::hex << Qt::showbase << littleToBigEndian(readHeader.textSegmentStart);
+#if 0
+    pobfHeader readHeader;
+    memcpy(&readHeader, byteArray + elfHeaderSize + dataSegmentAddress + symbolInfo.value, sizeof(pobfHeader));
+    qDebug() << "show symbol info offset";
+    qDebug() << readHeader.magic[0] << readHeader.magic[1] << readHeader.magic[2] << readHeader.magic[3];
+    qDebug() << Qt::hex << Qt::showbase << littleToBigEndian(readHeader.textSegmentStart);
+#endif
 
     pobfHeader header = {
         POBF_MAGIC,
@@ -491,7 +483,7 @@ MainInfo PowerObfuscator::findMain(uint8_t* byteArray, uint32_t elfHeaderSize, u
 
 SymbolInfo PowerObfuscator::findGlobalVariableBySymbolName(const QString& segmentName, const QString& symbolName, bool* outFound)
 {
-    ui.outputTextEdit->append("Searching for " + symbolName + " symbol in [" + segmentName + "] segment");
+    qDebug() << "----- Searching for " << symbolName << " symbol in [" << segmentName << "] segment -----";
 
     auto found = std::ranges::find_if(m_symbolsInfo, [&](const SymbolInfo& symInfo) {
         return (symInfo.binding == "Global") && (symInfo.type == "Object") && (symInfo.section == segmentName.toStdString()) && (symInfo.name == symbolName.toStdString());
@@ -499,11 +491,12 @@ SymbolInfo PowerObfuscator::findGlobalVariableBySymbolName(const QString& segmen
 
     if (found != m_symbolsInfo.end())
     {
-        ui.outputTextEdit->append("Found " + symbolName + " symbol in [" + segmentName + "] segment");
+        qDebug() << "Found symbol at offset " << Qt::hex << Qt::showbase << (*found).value << " in [" << segmentName << "] segment";
         *outFound = true;
         return *found;
     }
 
+    qDebug() << "Failed to find " << symbolName << " symbol in [" << segmentName << "] segment";
     *outFound = false;
     return {};
 }
@@ -538,7 +531,7 @@ void PowerObfuscator::saveFileWithPrefix(const QString& filePrefix, uint8_t* byt
     ui.outputTextEdit->append(obfuscatedFileName);
 }
 
-void PowerObfuscator::PrintEncryptionKeyForPrx(const std::vector<uint8_t>& keyBytes)
+void PowerObfuscator::printEncryptionKeyForPrx(const std::vector<uint8_t>& keyBytes)
 {
     ui.outputTextEdit->append("\n----- Use this key in your sprx code -----");
     std::stringstream ss;
@@ -723,11 +716,13 @@ void PowerObfuscator::getSectionHeaders(const std::string& fileName)
         lineStream >> section.type;
         lineStream >> std::hex >> section.address;
 
+#if 0
         // Remove leading/trailing white space from values
-        //section.name = trim(section.name);
-        //section.size = trim(section.size);
-        //section.type = trim(section.type);
-        //section.address = trim(section.address);
+        section.name = trim(section.name);
+        section.size = trim(section.size);
+        section.type = trim(section.type);
+        section.address = trim(section.address);
+#endif
 
         m_sections.push_back(section);
     }
