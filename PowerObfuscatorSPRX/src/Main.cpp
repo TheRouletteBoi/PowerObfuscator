@@ -5,7 +5,7 @@
 #include <sys/syscall.h>
 #include <sys/process.h>
 #include <libpsutil.h>
-#include <PowerObfuscatorAPI.h>
+#include <PowerObfuscator.h>
 
 SYS_MODULE_INFO( PowerObfuscatorSPRX, 0, 1, 1);
 SYS_MODULE_START( PowerObfuscatorSPRXMain );
