@@ -61,7 +61,7 @@ namespace pobf
 
     extern pobfHeader pobf_header;
 
-    namespace Encrypt
+    namespace Segment
     {
         STATIC_ALWAYS_INLINE sys_pid_t _sys_process_getpid()
         {
@@ -162,6 +162,87 @@ namespace pobf
             return false;
         }
 
+        template <class T>
+        STATIC_ALWAYS_INLINE void DecryptSegments(T mainFn)
+        {
+            uint32_t textSegment = (uint32_t)&__start__Ztext[0];
+            uint32_t dataSegemnt = (uint32_t)&__start__Zdata[0];
+            uint32_t rodataSegment = (uint32_t)&__start__Zrodata[0];
+            //uint32_t moduleBaseAddress = textSegment;
+
+            /* decrypt .data segment */
+            uint32_t dataSegmentStart = dataSegemnt;
+            uint32_t dataSegmentEnd = dataSegemnt + pobf_header.dataSegmentSize;
+
+            uint32_t headerStart = (uint32_t)&pobf_header;
+            uint32_t headerEnd = headerStart + sizeof(pobfHeader) + 3;
+
+            for (uint32_t i = dataSegmentStart; i < dataSegmentEnd; i++)
+            {
+                // skip pobf_header
+                if (i >= headerStart && i <= headerEnd)
+                    continue;
+
+                // read 1 byte at a time
+                uint8_t byte = *(uint8_t*)(i);
+
+                uint8_t unencryptedByte = byte ^ 0x69;
+                //printf("encryptedByte 0x%X unencryptedByte 0x%02X at 0x%X\n", byte, unencryptedByte, i);
+
+                _write_process_memory((void*)i, &unencryptedByte, sizeof(uint8_t));
+            }
+
+
+            /* decrypt .rodata segment */
+            uint32_t rodataSegmentStart = rodataSegment;
+            uint32_t rodataSegmentEnd = rodataSegment + pobf_header.rodataSegmentSize;
+
+            for (uint32_t i = rodataSegmentStart; i < rodataSegmentEnd; i++)
+            {
+                // read 1 byte at a time
+                uint8_t byte = *(uint8_t*)(i);
+
+                uint8_t unencryptedByte = byte ^ 0x69;
+                //printf("encryptedByte 0x%X unencryptedByte 0x%02X at 0x%X\n", byte, unencryptedByte, i);
+
+                _write_process_memory((void*)i, &unencryptedByte, sizeof(uint8_t));
+            }
+
+
+            /* decrypt .text segment */
+            uint32_t textSegmentStart = textSegment;
+            uint32_t textSegmentEnd = textSegment + pobf_header.textSegmentSize;
+
+            uint32_t mainStart = ((pobf::opd_s*)mainFn)->func;
+            uint32_t mainEnd = FindEndOfMain(mainStart, textSegmentEnd);
+
+            for (uint32_t i = textSegmentStart; i < textSegmentEnd; i++)
+            {
+                // skip the main() function
+                if (i >= mainStart && i <= mainEnd)
+                    continue;
+
+#if 0
+                if (SkipInstructionsWithStringOrPointerReference(textSegmentStart, textSegmentEnd, mainStart, mainEnd, i))
+                    continue;
+#endif
+
+                if (SkipLast2Bytes(i))
+                    continue;
+
+                // read 1 byte at a time
+                uint8_t byte = *(uint8_t*)(i);
+
+                uint8_t unencryptedByte = byte ^ 0x69;
+                //printf("encryptedByte 0x%X unencryptedByte 0x%02X at 0x%X\n", byte, unencryptedByte, i);
+
+                _write_process_memory((void*)i, &unencryptedByte, sizeof(uint8_t));
+            }
+        }
+    }
+
+    namespace Encrypt
+    {
         // RAII method 
         // EG: RealTimeEncryptFunction<decltype(&main)> encrypt(main);
         template <class T>
@@ -308,7 +389,7 @@ namespace pobf
         void ReplaceByType(uint32_t type);
     }
 
-    namespace Vx
+    namespace String_Vx
     {
         // https://stackoverflow.com/questions/7270473/compile-time-string-encryption
         // http://www.rohitab.com/discuss/topic/39611-malware-related-compile-time-hacks-with-c11/
@@ -348,7 +429,7 @@ namespace pobf
 
         // Compile-time random macros, can be used to randomize execution  
         // path for separate builds, or compile-time trash code generation
-        #define vxRAND()		   (pobf::Vx::vxCplConstantify<pobf::Vx::vxCplRandom(__COUNTER__ + 1)>::Value)
+        #define vxRAND()		   (pobf::String_Vx::vxCplConstantify<pobf::String_Vx::vxCplRandom(__COUNTER__ + 1)>::Value)
         #define vxRANDOM(Min, Max) (Min + (vxRAND() % (Max - Min + 1)))
         
 
@@ -395,7 +476,7 @@ namespace pobf
         };
     }
 
-    namespace ADVobfuscator
+    namespace String_ADVobfuscator
     {
         // https://github.com/andrivet/ADVobfuscator
 
@@ -583,7 +664,7 @@ namespace pobf
         };
     }
 
-    namespace Enstone
+    namespace String_Enstone
     {
         // Compile-time generator for random numbers
         template<int N>
@@ -682,7 +763,7 @@ namespace pobf
         };
     }
 
-    namespace MetaRand
+    namespace Integer_MetaRand
     {
         // Meta Random Integer
         // https://github.com/cr-lupin/metarand
@@ -969,11 +1050,11 @@ namespace pobf
 /************* VxObfuscator *******************/
 
 // Compile-time hashing macro, hash values changes using the first pseudorandom number in sequence
-#define vxHASH(Str) (uint32_t)(pobf::Vx::vxCplConstantify<pobf::Vx::vxCplHash(Str)>::Value ^ pobf::Vx::vxCplConstantify<pobf::Vx::vxCplRandom(1)>::Value)
+#define vxHASH(Str) (uint32_t)(pobf::String_Vx::vxCplConstantify<pobf::String_Vx::vxCplHash(Str)>::Value ^ pobf::String_Vx::vxCplConstantify<pobf::String_Vx::vxCplRandom(1)>::Value)
 
 // Compile-time string encryption macro
 // NOTE(Roulette): In disassembly PPC64 it uses memcpy and a small for loop to decrypt the string
-#define vxENCRYPT(Str) (pobf::Vx::vxCplEncryptedString<pobf::Vx::vxCplIndexes<sizeof(Str) - 1>::Result>(Str).decrypt())
+#define vxENCRYPT(Str) (pobf::String_Vx::vxCplEncryptedString<pobf::String_Vx::vxCplIndexes<sizeof(Str) - 1>::Result>(Str).decrypt())
 
 #define ENCRYPTSTRV1(str) vxENCRYPT(str)
 
@@ -983,7 +1064,7 @@ namespace pobf
 
 // Prefix notation
 // NOTE(Roulette): In disassembly PPC64 it does not use memcpy but rather individual instructions like "li r3 0x48" for each byte which increases code size (sprx size increase for each use case)
-#define ADV_DEF_OBFUSCATED(str) pobf::ADVobfuscator::MetaString<pobf::ADVobfuscator::MetaRandom<__COUNTER__, 3>::value, pobf::ADVobfuscator::MetaRandomChar<__COUNTER__>::value, pobf::ADVobfuscator::Make_Indexes<sizeof(str) - 1>::type>(str)
+#define ADV_DEF_OBFUSCATED(str) pobf::String_ADVobfuscator::MetaString<pobf::String_ADVobfuscator::MetaRandom<__COUNTER__, 3>::value, pobf::String_ADVobfuscator::MetaRandomChar<__COUNTER__>::value, pobf::String_ADVobfuscator::Make_Indexes<sizeof(str) - 1>::type>(str)
 #define ADV_OBFUSCATED_STR(str) (ADV_DEF_OBFUSCATED(str).decrypt())
 
 #define ENCRYPTSTRV2(str) ADV_OBFUSCATED_STR(str)
@@ -998,9 +1079,9 @@ namespace pobf
 // NOTE(Roulette): This string encryption "may" be slightly slower since it uses std::string. Need to profile it to actually see results.
 #define EnstoneStringEncrypt(str) []() __attribute__((noinline)) \
     { \
-        constexpr int key = pobf::Enstone::RandomValue<__COUNTER__, -200, 200>::value; \
-        static constexpr auto encrypted = pobf::Enstone::Encrypted<key, sizeof(str), pobf::Enstone::MakeIndexes<sizeof(str)>::Result>(str); \
-        return pobf::Enstone::DecryptString(encrypted.data, sizeof(str), key); \
+        constexpr int key = pobf::String_Enstone::RandomValue<__COUNTER__, -200, 200>::value; \
+        static constexpr auto encrypted = pobf::String_Enstone::Encrypted<key, sizeof(str), pobf::String_Enstone::MakeIndexes<sizeof(str)>::Result>(str); \
+        return pobf::String_Enstone::DecryptString(encrypted.data, sizeof(str), key); \
     }().c_str()
 
 #define ENCRYPTSTRV3(str) EnstoneStringEncrypt(str)

@@ -58,29 +58,29 @@ void pobf_CompileTime_RandomInt_Example()
     printf("pobf_CompileTime_RandomInt_Example\n");
 
     // Bernoulli engine is not fully implemented
-    //pobf::MetaRand::CMetaUInt_PrintRandoms<10, typename pobf::MetaRand::Bernoulli<pobf::MetaRand::linear_congruential_engine<uint_fast32_t,3>, 1, 10>>::type >::print();
+    //pobf::Integer_MetaRand::CMetaUInt_PrintRandoms<10, typename pobf::Integer_MetaRand::Bernoulli<pobf::Integer_MetaRand::linear_congruential_engine<uint_fast32_t,3>, 1, 10>>::type >::print();
      
      
     // Meta Random
-    pobf::MetaRand::CMetaUInt_PrintRandoms<15, typename pobf::MetaRand::CMetaUInt_Random<pobf::MetaRand::substract_with_carry_engine<unsigned int, 10, 2, 1>>::type >::print();
+    pobf::Integer_MetaRand::CMetaUInt_PrintRandoms<15, typename pobf::Integer_MetaRand::CMetaUInt_Random<pobf::Integer_MetaRand::substract_with_carry_engine<unsigned int, 10, 2, 1>>::type >::print();
 
 
     // Last template argument is the random seed. It is optional.
-    typedef pobf::MetaRand::CMetaUInt_init<pobf::MetaRand::substract_with_carry_engine<unsigned int, 10, 2, 1>>::type X;
+    typedef pobf::Integer_MetaRand::CMetaUInt_init<pobf::Integer_MetaRand::substract_with_carry_engine<unsigned int, 10, 2, 1>>::type X;
 
     // Prints the first random number
-    typedef pobf::MetaRand::CMetaUInt_Next<X>::type X0;
+    typedef pobf::Integer_MetaRand::CMetaUInt_Next<X>::type X0;
     printf("CMetaUInt_Next<X>: 0x%X\n", X0::value);
 
     // Prints the second random number
-    typedef pobf::MetaRand::CMetaUInt_Next<X0>::type X1;
+    typedef pobf::Integer_MetaRand::CMetaUInt_Next<X0>::type X1;
     printf("CMetaUInt_Next<X0>: 0x%X\n", X1::value);
 
-    unsigned int randomInt1 = pobf::MetaRand::RandomCompileTimeInteger1::value;
-    unsigned int randomInt2 = pobf::MetaRand::RandomCompileTimeInteger2::value;
-    unsigned int randomInt3 = pobf::MetaRand::RandomCompileTimeInteger3::value;
-    unsigned int randomInt4 = pobf::MetaRand::RandomCompileTimeInteger4::value;
-    unsigned int randomInt5 = pobf::MetaRand::RandomCompileTimeInteger5::value;
+    unsigned int randomInt1 = pobf::Integer_MetaRand::RandomCompileTimeInteger1::value;
+    unsigned int randomInt2 = pobf::Integer_MetaRand::RandomCompileTimeInteger2::value;
+    unsigned int randomInt3 = pobf::Integer_MetaRand::RandomCompileTimeInteger3::value;
+    unsigned int randomInt4 = pobf::Integer_MetaRand::RandomCompileTimeInteger4::value;
+    unsigned int randomInt5 = pobf::Integer_MetaRand::RandomCompileTimeInteger5::value;
     
     printf("RandomCompileTimeInteger1 0x%X\n", randomInt1);
     printf("RandomCompileTimeInteger2 0x%X\n", randomInt2);
@@ -173,101 +173,7 @@ void pobf_DumpObfuscation2_Example()
 // TODO(Roulette): either keep all functions inlined in main() or modify PowerObfuscatorGUI to skip symbols with 'pobf_' to allow no inline functions
 extern "C" int PowerObfuscatorSPRXMain(int argc, char* argv[])
 {
-    uint32_t textSegment = (uint32_t)&__start__Ztext[0];
-    uint32_t dataSegemnt = (uint32_t)&__start__Zdata[0];
-    uint32_t rodataSegment = (uint32_t)&__start__Zrodata[0];
-    uint32_t moduleBaseAddress = textSegment;
-
-    ////////// .data segment ////////////////////
-
-    uint32_t dataSegmentStart = dataSegemnt;
-    uint32_t dataSegmentEnd = dataSegemnt + pobf::pobf_header.dataSegmentSize;
-    
-    uint32_t headerStart = (uint32_t)&pobf::pobf_header;
-    uint32_t headerEnd = headerStart + sizeof(pobf::pobfHeader) + 3;
-
-    // decrypt .data segment
-    for (uint32_t i = dataSegmentStart; i < dataSegmentEnd; i++)
-    {
-        // skip pobf_header
-        if (i >= headerStart && i <= headerEnd)
-            continue;
-
-        // read 1 byte at a time
-        uint8_t byte = *(uint8_t*)(i);
-
-        uint8_t unencryptByte = byte ^ 0x69;
-        //printf("encryptedByte 0x%X unencryptByte 0x%02X at 0x%X\n", byte, unencryptByte, i);
-
-        pobf::Encrypt::_write_process_memory((void*)i, &unencryptByte, sizeof(uint8_t));
-    }
-
-
-    //////////// .rodata segment ////////////////////
-
-    uint32_t rodataSegmentStart = rodataSegment;
-    uint32_t rodataSegmentEnd = rodataSegment + pobf::pobf_header.rodataSegmentSize;
-
-    // decrypt .rodata segment
-    for (uint32_t i = rodataSegmentStart; i < rodataSegmentEnd; i++)
-    {
-        // read 1 byte at a time
-        uint8_t byte = *(uint8_t*)(i);
-
-        uint8_t unencryptByte = byte ^ 0x69;
-        //printf("encryptedByte 0x%X unencryptByte 0x%02X at 0x%X\n", byte, unencryptByte, i);
-
-        pobf::Encrypt::_write_process_memory((void*)i, &unencryptByte, sizeof(uint8_t));
-    }
-
-
-    /////////////// .text segment //////////////////
-    printf("textSegment 0x%X\n", moduleBaseAddress);
-    printf("dataSegemnt 0x%X\n", dataSegemnt);
-    printf("rodataSegment 0x%X\n\n", rodataSegment);
-
-    printf("rodataSegmentStart 0x%X\n", rodataSegmentStart);
-    printf("rodataSegmentEnd 0x%X\n", rodataSegmentEnd);
-
-    printf("dataSegmentStart 0x%X\n", dataSegmentStart);
-    printf("dataSegmentEnd 0x%X\n", dataSegmentEnd);
-
-    printf("headerStart 0x%X\n", headerStart);
-    printf("headerEnd 0x%X\n", headerEnd);
-
-    uint32_t textSegmentStart = textSegment;
-    uint32_t textSegmentEnd = textSegment + pobf::pobf_header.textSegmentSize;
-    printf("textSegmentStart 0x%X\n", textSegmentStart);
-    printf("textSegmentEnd 0x%X\n", textSegmentEnd);
-
-    uint32_t mainStart = ((pobf::opd_s*)PowerObfuscatorSPRXMain)->func;
-    uint32_t mainEnd = pobf::Encrypt::FindEndOfMain(mainStart, textSegmentEnd);
-    printf("mainStart 0x%X\n", mainStart);
-    printf("mainEnd 0x%X\n", mainEnd);
-
-    // decrypt .text segment
-    for (uint32_t i = textSegmentStart; i < textSegmentEnd; i++)
-    {
-        // skip the main() function
-        if (i >= mainStart && i <= mainEnd)
-            continue;
-
-#if 0
-        if (pobf::Encrypt::SkipInstructionsWithStringOrPointerReference(textSegmentStart, textSegmentEnd, mainStart, mainEnd, i))
-            continue;
-#endif
-
-        if (pobf::Encrypt::SkipLast2Bytes(i))
-            continue;
-
-        // read 1 byte at a time
-        uint8_t byte = *(uint8_t*)(i);
-
-        uint8_t unencryptByte = byte ^ 0x69;
-        //printf("encryptedByte 0x%X unencryptByte 0x%02X at 0x%X\n", byte, unencryptByte, i);
-
-        pobf::Encrypt::_write_process_memory((void*)i, &unencryptByte, sizeof(uint8_t));
-    }
+    pobf::Segment::DecryptSegments(PowerObfuscatorSPRXMain);
 
     sys_ppu_thread_create(&gTestEncryptedThreadId, MainThread, 0, 3000, 8192, SYS_PPU_THREAD_CREATE_JOINABLE, "TestEncryptedThread");
 
