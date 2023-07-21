@@ -45,15 +45,9 @@ void ThisFuncShouldBeEncrypted003()
 
 void MainThread(uint64_t arg)
 {
-    sys_timer_sleep(8000);
+    printf("Hello from MainThread\n");
 
-    printf("MainThread\n");
-
-    ThisFuncShouldBeEncrypted001();
-    int value = ThisFuncShouldBeEncrypted002(999, 999);
-    printf("value in thread %d\n", value);
-
-
+    ThisFuncShouldBeEncrypted003();
 
     sys_ppu_thread_exit(0);
 }
@@ -175,41 +169,102 @@ void pobf_DumpObfuscation_Example()
 // TODO(Roulette): either keep all functions inlined in main() or modify PowerObfuscatorGUI to skip symbols with 'pobf_' to allow no inline functions
 extern "C" int PowerObfuscatorSPRXMain(int argc, char* argv[])
 {
-    printf("PowerObfuscatorSPRXMain\n");
+    uint32_t textSegment = (uint32_t)&__start__Ztext[0];
+    uint32_t dataSegemnt = (uint32_t)&__start__Zdata[0];
+    uint32_t rodataSegment = (uint32_t)&__start__Zrodata[0];
+    uint32_t moduleBaseAddress = textSegment;
 
-    uint32_t functionAddressStart = ((pobf::opd_s*)PowerObfuscatorSPRXMain)->func;
-    printf("functionAddressStart 0x%X\n", functionAddressStart);
+    ////////// .data segment ////////////////////
 
-    uint32_t moduleBaseAddress = (uint32_t)&__start__Ztext[0];
+    uint32_t dataSegmentStart = dataSegemnt;
+    uint32_t dataSegmentEnd = dataSegemnt + pobf_header.dataSegmentSize;
+    
+    uint32_t headerStart = (uint32_t)&pobf_header;
+    uint32_t headerEnd = headerStart + sizeof(pobfHeader) + 3;
 
-    uint32_t textSegmentStart = moduleBaseAddress;
-    uint32_t textSegmentStop = moduleBaseAddress + pobf_header.textSegmentStart + pobf_header.textSegmentSize;
-    printf("textSegmentStart 0x%X\n", textSegmentStart);
-    printf("textSegmentStop 0x%X\n", textSegmentStop);
-
-    uint32_t functionAddressStop = pobf::EncryptV3::FindEndOfMain(functionAddressStart, textSegmentStop);
-    printf("functionAddressStop 0x%X\n", functionAddressStop);
-
-    for (uint32_t i = textSegmentStart; i < textSegmentStop; i++)
+    // decrypt .data segment
+    for (uint32_t i = dataSegmentStart; i < dataSegmentEnd; i++)
     {
-        // skip the main function
-        if (i >= functionAddressStart && i <= functionAddressStop)
+        // skip pobf header
+        if (i >= headerStart && i <= headerEnd)
             continue;
 
         // read 1 byte at a time
         uint8_t byte = *(uint8_t*)(i);
 
         uint8_t unencryptByte = byte ^ 0x69;
-        printf("unencryptByte 0x%02X at 0x%X\n", unencryptByte, i);
+        //printf("encryptedByte 0x%X unencryptByte 0x%02X at 0x%X\n", byte, unencryptByte, i);
 
         pobf::EncryptV3::_write_process_memory((void*)i, &unencryptByte, sizeof(uint8_t));
     }
 
-    uint32_t mainThreadAddress = ((pobf::opd_s*)MainThread)->func;
-    printf("mainThreadAddress 0x%X\n", mainThreadAddress);
+
+    //////////// .rodata segment ////////////////////
+
+    uint32_t rodataSegmentStart = rodataSegment;
+    uint32_t rodataSegmentEnd = rodataSegment + pobf_header.rodataSegmentSize;
+
+    // decrypt .rodata segment
+    for (uint32_t i = rodataSegmentStart; i < rodataSegmentEnd; i++)
+    {
+        // read 1 byte at a time
+        uint8_t byte = *(uint8_t*)(i);
+
+        uint8_t unencryptByte = byte ^ 0x69;
+        //printf("encryptedByte 0x%X unencryptByte 0x%02X at 0x%X\n", byte, unencryptByte, i);
+
+        pobf::EncryptV3::_write_process_memory((void*)i, &unencryptByte, sizeof(uint8_t));
+    }
 
 
-    printf("creating encrypted thread\n");
+    /////////////// .text segment //////////////////
+    printf("textSegment 0x%X\n", moduleBaseAddress);
+    printf("dataSegemnt 0x%X\n", dataSegemnt);
+    printf("rodataSegment 0x%X\n\n", rodataSegment);
+
+    printf("rodataSegmentStart 0x%X\n", rodataSegmentStart);
+    printf("rodataSegmentEnd 0x%X\n", rodataSegmentEnd);
+
+    printf("dataSegmentStart 0x%X\n", dataSegmentStart);
+    printf("dataSegmentEnd 0x%X\n", dataSegmentEnd);
+
+    printf("headerStart 0x%X\n", headerStart);
+    printf("headerEnd 0x%X\n", headerEnd);
+
+    uint32_t textSegmentStart = textSegment;
+    uint32_t textSegmentEnd = textSegment + pobf_header.textSegmentSize;
+    printf("textSegmentStart 0x%X\n", textSegmentStart);
+    printf("textSegmentEnd 0x%X\n", textSegmentEnd);
+
+    uint32_t mainStart = ((pobf::opd_s*)PowerObfuscatorSPRXMain)->func;
+    uint32_t mainEnd = pobf::EncryptV3::FindEndOfMain(mainStart, textSegmentEnd);
+    printf("mainStart 0x%X\n", mainStart);
+    printf("mainEnd 0x%X\n", mainEnd);
+
+    // decrypt .text segment
+    for (uint32_t i = textSegmentStart; i < textSegmentEnd; i++)
+    {
+        // skip the main() function
+        if (i >= mainStart && i <= mainEnd)
+            continue;
+
+#if 0
+        if (pobf::EncryptV3::skipInstructionsWithStringOrPointerReference(textSegmentStart, textSegmentEnd, mainStart, mainEnd, i))
+            continue;
+#endif
+
+        if (pobf::EncryptV3::skipLast2Bytes(i))
+            continue;
+
+        // read 1 byte at a time
+        uint8_t byte = *(uint8_t*)(i);
+
+        uint8_t unencryptByte = byte ^ 0x69;
+        //printf("encryptedByte 0x%X unencryptByte 0x%02X at 0x%X\n", byte, unencryptByte, i);
+
+        pobf::EncryptV3::_write_process_memory((void*)i, &unencryptByte, sizeof(uint8_t));
+    }
+
     sys_ppu_thread_create(&gTestEncryptedThreadId, MainThread, 0, 3000, 8192, SYS_PPU_THREAD_CREATE_JOINABLE, "TestEncryptedThread");
 
     return 0;
