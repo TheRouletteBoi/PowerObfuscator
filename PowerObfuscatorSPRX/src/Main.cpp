@@ -145,7 +145,7 @@ void pobf_AllStringEncryptions_Example()
     printf("vxHASH: 0x%08X\n", vxHASH("hello world!"));
 }
 
-void pobf_DumpObfuscation_Example()
+void pobf_DumpObfuscation1_Example()
 {
     pobf::DumpObfuscation::SetEbootRange(0x0010200, 0x17FDA50);
 
@@ -159,7 +159,11 @@ void pobf_DumpObfuscation_Example()
     case 4: { pobf::DumpObfuscation::ReplaceLisR7(); break; }
     default: { pobf::DumpObfuscation::ReplaceLisR3(); }
     }
+}
 
+void pobf_DumpObfuscation2_Example()
+{
+    pobf::DumpObfuscation::SetEbootRange(0x0010200, 0x17FDA50);
 
     // Example using multiple types 
     pobf::DumpObfuscation::ReplaceByType(pobf::DumpObfuscation::LisR3 | pobf::DumpObfuscation::LisR4 | pobf::DumpObfuscation::LisR6 | pobf::DumpObfuscation::XorR7);
