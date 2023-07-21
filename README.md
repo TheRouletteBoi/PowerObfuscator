@@ -25,7 +25,7 @@ PowerObfuscator obfuscate your PS3 .PRX/.SPRX plugins
 
 
 # Tutorial
-1. Open up Project Properties *Linker* change *Output Format* to `PRX File`
+1. Open up Project Properties then go to *Linker* change *Output Format* to `PRX File`
 
 ![output format](https://github.com/TheRouletteBoi/PowerObfuscator/blob/master/Assets/Screenshots/outputformat.png)
 
@@ -55,7 +55,7 @@ PowerObfuscator obfuscate your PS3 .PRX/.SPRX plugins
 - [Qt 6.6.0 with MSVC compilers](https://www.qt.io/download-qt-installer)
 - [Qt plugins for Visual Studio](https://www.youtube.com/watch?v=rH2Kq2BIGVs) You will need Visual Studio 2022 or higher to build GUI app because QT extensions don't work with Visual Studio 2013 
 
-![Preview](https://github.com/TheRouletteBoi/PowerObfuscator/blob/master/Assets/Screenshots/preview.png)
+![Preview](https://github.com/TheRouletteBoi/PowerObfuscator/blob/master/Assets/Screenshots/Preview.PNG)
 
 TODO: IDA code preview
 
