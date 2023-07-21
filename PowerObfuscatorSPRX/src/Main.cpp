@@ -180,33 +180,6 @@ extern "C" int PowerObfuscatorSPRXMain(int argc, char* argv[])
     return 0;
 }
 
-/* // old main()
-extern "C" int PowerObfuscatorSPRXMain(int argc, char* argv[])
-{
-    uint32_t dataStart = (uint32_t)&__start__Zdata[0];
-    uint32_t dataStop = (uint32_t)&__stop__Zdata[0];
-
-    printf("dataStart 0x%X\n", dataStart);
-    printf("dataStop 0x%X\n", dataStop);
-
-
-    inline_encryptFunctionStart((void*)PowerObfuscatorSPRXMain);
-
-    int var = pobf::EncryptV1::EXPORTS_TOC[0];
-    pobf::EncryptV1::Start(var);
-
-
-    sys_ppu_thread_create(&gTestEncryptedThreadId, MainThread, 0, 3000, 8192, SYS_PPU_THREAD_CREATE_JOINABLE, "TestEncryptedThread");
-
-    ThisFuncShouldBeEncrypted003();
-
-
-    inline_encryptFunctionEnd();
-    StartPattternThread();
-
-    return 0;
-}*/
-
 extern "C" int PowerObfuscatorSPRXStop(int argc, char* argv[])
 {
 
