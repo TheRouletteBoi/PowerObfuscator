@@ -613,7 +613,7 @@ void PowerObfuscator::getElfInfo(const std::string& fileName)
         Number of Section Headers : 40
         Section Header String Index : 26
     */
-    std::string command = "ps3bin.exe --dump-elf-header " + fileName;
+    std::string command = "ps3bin.exe --dump-elf-header \"" + fileName + "\"";
     std::string result = systemResult(command.c_str());
 
     ui.outputTextEdit->append("----- ELF Information -----");
@@ -723,7 +723,7 @@ void PowerObfuscator::getSectionHeaders(const std::string& fileName)
         38    .rela.debug_line          0x00000870     SHT_RELA              0x00000000
         39    .sceversion               0x00000077     SHT_PROGBITS          0x00000000
     */
-    std::string command = "ps3bin.exe --dump-section-headers " + fileName;
+    std::string command = "ps3bin.exe --dump-section-headers \"" + fileName + "\"";
     std::string result = systemResult(command.c_str());
 
     ui.outputTextEdit->append("----- Section Headers -----");
@@ -771,7 +771,7 @@ void PowerObfuscator::getSizeStatistics(const std::string& fileName)
         Text Size   Data Size   RO-Data Size  BSS Size    Total       Filename
         12436       792         1208          8           14444       C:\Users\agent\Documents\GitHub\PowerObfuscator\bin\Debug-PS3\PowerObfuscatorSPRX.prx    
     */
-    std::string command = "ps3bin.exe --dump-sizes " + fileName;
+    std::string command = "ps3bin.exe --dump-sizes \"" + fileName + "\"";
     std::string result = systemResult(command.c_str());
 
     ui.outputTextEdit->append("----- Segment Sizes -----");
@@ -871,7 +871,7 @@ void PowerObfuscator::getSymbolInfo(const std::string& fileName)
         0x00000000000000D8 Weak         STT_NOTYPE   .opd             std::basic_string<char, std::char_traits<char>, std::allocator<char>>::_Copy(unsigned int, unsigned int)
         0x00000000000000DC Global       Function     .text            ThisFuncShouldBeEncrypted003()
     */
-    std::string command = "ps3bin.exe --dump-symbols " + fileName;
+    std::string command = "ps3bin.exe --dump-symbols \"" + fileName + "\"";
     std::string result = systemResult(command.c_str());
 
     ui.outputTextEdit->append("----- Symbol Information -----");
@@ -927,7 +927,7 @@ void PowerObfuscator::getSegmentInfo(const std::string& fileName, const std::str
         0x000030A4  1C 00 00 00 80 00 00 02 00 01 00 00 00 00 00 00  ................
         0x000030B4  00 00 00 00 00 00 31 40 00 00 31 4C              ......1@..1L
     */
-    std::string command = "ps3bin.exe --dump-sections=" + segmentName + " --hex " + fileName;
+    std::string command = "ps3bin.exe --dump-sections=" + segmentName + " --hex \"" + fileName + "\"";
     std::string result = systemResult(command.c_str());
 
     ui.outputTextEdit->append("----- Segment Info -----");
@@ -993,7 +993,7 @@ void PowerObfuscator::getSegmentInfo(const std::string& fileName, const std::str
 
 void PowerObfuscator::stripSymbolsPrx(const std::string& fileName)
 {
-    std::string command = "ps3bin.exe --strip-all " + fileName;
+    std::string command = "ps3bin.exe --strip-all \"" + fileName + "\"";
     std::string result = systemResult(command.c_str());
 
     ui.outputTextEdit->append("Stripping symbols");
@@ -1007,18 +1007,15 @@ void PowerObfuscator::stripSymbolsPrx(const std::string& fileName)
 
 void PowerObfuscator::signPrx(const std::string& inFileName, const std::string& outFileName)
 {
-    //std::string command = "scetool.exe -0 SELF -1 TRUE -s FALSE -2 0A -3 1070000052000001 -4 01000002 -5 APP -6 0003004000000000 -A 0001000000000000 --self-ctrl-flags 4000000000000000000000000000000000000000000000000000000000000002 -e " + inFileName + " " + outFileName;
-    //std::string command = "scetool --sce-type=SELF --compress-data=TRUE --skip-sections=FALSE --key-revision=04 --self-ctrl-flags=4000000000000000000000000000000000000000000000000000000000000002 --self-auth-id=1010000001000003 --self-add-shdrs=TRUE --self-vendor-id=01000002 --self-app-version=0001000000000000 --self-type=APP --self-fw-version=0003004000000000 --encrypt " + inFileName + " " + outFileName;
+    std::string command = "scetool.exe -0 SELF -1 TRUE -s FALSE -2 0A -3 1070000052000001 -4 01000002 -5 APP -6 0003004000000000 -A 0001000000000000 --self-ctrl-flags 4000000000000000000000000000000000000000000000000000000000000002 -e \"" + inFileName + "\"" + " \"" + outFileName + "\"";
+    //std::string command = "powershell.exe -Command \"./scetool.exe -0 SELF -1 TRUE -s FALSE -2 0A -3 1070000052000001 -4 01000002 -5 APP -6 0003004000000000 -A 0001000000000000 --self-ctrl-flags 4000000000000000000000000000000000000000000000000000000000000002 -e \"" + inFileName + "\"" + " \"" + outFileName + "\"";
 
-    std::string command = "powershell.exe -Command \"./scetool.exe -0 SELF -1 TRUE -s FALSE -2 0A -3 1070000052000001 -4 01000002 -5 APP -6 0003004000000000 -A 0001000000000000 --self-ctrl-flags 4000000000000000000000000000000000000000000000000000000000000002 -e " + inFileName + " " + outFileName + "\"";
     systemResult(command.c_str());
+    //systemWin32(command.c_str());
 
     qDebug() << command;
 
-
     ui.outputTextEdit->append("Signing prx");
-
-    //systemWin32(command.c_str());
 }
 
 std::string PowerObfuscator::systemResult(const char* cmd)
