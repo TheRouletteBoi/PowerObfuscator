@@ -8,7 +8,7 @@ PowerObfuscator obfuscate your PS3 .PRX/.SPRX plugins
 - Real Time Function Encryption & Decryption
 - Real Time Memory Address Encryption & Decryption
 - Dump Obfuscation
-- Segment obfuscation [.text] [.data] [.rodata] 
+- Segment Obfuscation [.text] [.data] [.rodata] 
 
 # Installation
 1. Download the latest release from [Releases](https://github.com/TheRouletteBoi/PowerObfuscator/releases)
