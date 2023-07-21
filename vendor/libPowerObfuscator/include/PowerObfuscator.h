@@ -104,7 +104,7 @@ namespace pobf
                 // find end of function by searching for 'blr' instruction 4E 80 00 20
                 if (*(uint32_t*)(i) == 0x4E800020)
                 {
-                    found = i + 4;
+                    found = i + 3;
                     break;
                 }
             }

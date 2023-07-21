@@ -468,11 +468,12 @@ MainInfo PowerObfuscator::findMain(uint8_t* byteArray, uint32_t elfHeaderSize, u
             // find end of function by searching for 'blr' instruction 4E 80 00 20
             if (byteArray[i] == 0x4E && byteArray[i + 1] == 0x80 && byteArray[i + 2] == 0x00 && byteArray[i + 3] == 0x20)
             {
-                mainInfo.endWithElfHeader = i + 4;
-                mainInfo.end = (i + 4) - elfHeaderSize;
+                mainInfo.endWithElfHeader = i + 3;
+                mainInfo.end = (i + 3) - elfHeaderSize;
 
                 // Bytes found
-                qDebug() << "End of function found at offset: " << Qt::hex << Qt::showbase << (i + 4);
+                qDebug() << "End of function found at: " << Qt::hex << Qt::showbase << mainInfo.end;
+                qDebug() << "End of function with ELF header found at: " << Qt::hex << Qt::showbase << mainInfo.endWithElfHeader;
                 break;
             }
         }
