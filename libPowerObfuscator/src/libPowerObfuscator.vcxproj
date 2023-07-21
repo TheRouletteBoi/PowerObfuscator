@@ -70,7 +70,6 @@
     <ClCompile Include="PowerObfuscator.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Defines.h" />
     <ClInclude Include="DumpObfuscation\DumpObfuscation.h" />
     <ClInclude Include="PowerObfuscator.h" />
   </ItemGroup>

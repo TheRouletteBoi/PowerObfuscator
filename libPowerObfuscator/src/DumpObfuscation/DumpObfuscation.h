@@ -2,7 +2,6 @@
 #define __DUMPOBFUSCATION_H__
 
 #include <types.h>
-#include "Defines.h"
 
 namespace pobf
 {
