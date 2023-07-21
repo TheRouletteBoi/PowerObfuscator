@@ -160,7 +160,7 @@ public:
     void getSegmentInfo(const std::string& fileName, const std::string& segmentName, SegmentInfo& segmentInfo);
     void stripSymbolsPrx(const std::string& fileName);
     void signPrx(const std::string& inFileName, const std::string& outFileName);
-    void obfuscateSegment(const QString& segmentName, uint8_t* byteArray, const std::vector<uint8_t>& encryptionKey);
+    bool obfuscateSegment(const QString& segmentName, uint8_t* byteArray, const std::vector<uint8_t>& encryptionKey);
 
     bool skipLast2Bytes(uint32_t iterator);
 
@@ -169,7 +169,7 @@ public:
     */
     bool skipInstructionsWithStringOrPointerReference(uint8_t* byteArray, uint32_t textSegmentStart, uint32_t textSegmentEnd, MainInfo& mainInfo, uint32_t offsetToCompare);
 
-    void fixHeader(uint8_t* byteArray, const QString& segmentNameInSymbol, const QString& symbolName);
+    bool fixHeader(uint8_t* byteArray, const QString& segmentNameInSymbol, const QString& symbolName);
     uint32_t geBinaryOffsetFromSegment(const QString& segmentName);
     MainInfo findMain(uint8_t* byteArray, uint32_t elfHeaderSize, uint32_t textSegmentEnd);
     SymbolInfo findGlobalVariableBySymbolName(const QString& segmentName, const QString& symbolName, bool* outFound);

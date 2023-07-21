@@ -104,16 +104,40 @@ void PowerObfuscator::on_obfuscateButton_clicked()
     qDebug() << m_fileSize;
 
     // Over write real pobfHeader values
-    fixHeader(byteArray, ".data", "pobf::pobf_header");
-
-    // Obfuscate [.text] segment
-    obfuscateSegment(".text", byteArray, keyBytes);
-
-    // Obfuscate [.rodata] segment
-    obfuscateSegment(".rodata", byteArray, keyBytes);
+    bool wasSymbolfound = fixHeader(byteArray, ".data", "pobf::pobf_header");
+    if (!wasSymbolfound)
+    {
+        ui.outputTextEdit->append("ERROR: Unable to encrypt prx, Symbol pobf::pobf_header not found");
+        m_qFile.close();
+        return;
+    }
 
     // Obfuscate [.data] segment
-    obfuscateSegment(".data", byteArray, keyBytes);
+    bool statusDataSegment = obfuscateSegment(".data", byteArray, keyBytes);
+    if (!statusDataSegment)
+    {
+        ui.outputTextEdit->append("ERROR: Unable to encrypt prx, Failed to obfuscate .data segment");
+        m_qFile.close();
+        return;
+    }
+
+    // Obfuscate [.rodata] segment
+    bool statusRodataSegment = obfuscateSegment(".rodata", byteArray, keyBytes);
+    if (!statusRodataSegment)
+    {
+        ui.outputTextEdit->append("ERROR: Unable to encrypt prx, Failed to obfuscate .rodata segment");
+        m_qFile.close();
+        return;
+    }
+
+    // Obfuscate [.text] segment
+    bool statusTextSegment = obfuscateSegment(".text", byteArray, keyBytes);
+    if (!statusTextSegment)
+    {
+        ui.outputTextEdit->append("ERROR: Unable to encrypt prx, Failed to obfuscate .text segment");
+        m_qFile.close();
+        return;
+    }
 
     // Save obfuscated prx file
     saveFileWithPrefix("obf_", byteArray, true);
@@ -160,21 +184,21 @@ void PowerObfuscator::on_deobfuscateButton_clicked()
     uint8_t* byteArray = buffer.get();
     int readBytes = m_qDataStream.readRawData(reinterpret_cast<char*>(byteArray), m_fileSize);
 
-    // Deobfuscate [.text] segment
-    obfuscateSegment(".text", byteArray, keyBytes);
+    // Deobfuscate [.data] segment
+    obfuscateSegment(".data", byteArray, keyBytes);
 
     // Deobfuscate [.rodata] segment
     obfuscateSegment(".rodata", byteArray, keyBytes);
 
-    // Deobfuscate [.data] segment
-    obfuscateSegment(".data", byteArray, keyBytes);
+    // Deobfuscate [.text] segment
+    obfuscateSegment(".text", byteArray, keyBytes);
 
     // Save deobfuscated prx file
     saveFileWithPrefix("deobf_", byteArray, false);
 #endif
 }
 
-void PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byteArray, const std::vector<uint8_t>& encryptionKey)
+bool PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byteArray, const std::vector<uint8_t>& encryptionKey)
 {
     ui.outputTextEdit->append("Searching for [" + segmentName + "] segment address and size");
 
@@ -208,9 +232,13 @@ void PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byte
     qDebug() << "Segment Address End with ELF header: " << Qt::hex << Qt::showbase << segmentAddressEnd;
 
     MainInfo mainInfo = findMain(byteArray, elfHeaderSize, segmentAddressEnd);
+    if (mainInfo.end == 0)
+        return false;
 
     bool wasPobfHeaderSymbolFound = false;
     SymbolInfo pobfHeaderSymbol = findGlobalVariableBySymbolName(".data", "pobf::pobf_header", &wasPobfHeaderSymbolFound);
+    if (!wasPobfHeaderSymbolFound)
+        return false;
 
     uint32_t pobfHeaderStart = segmentAddress + pobfHeaderSymbol.value;
     uint32_t pobfHeaderEnd = segmentAddress + pobfHeaderSymbol.value + sizeof(pobfHeader) + 3;
@@ -256,6 +284,9 @@ void PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byte
         //TODO(Roulette): uncomment this code when prx obfuscation is finished
         //byteArray[i] = (byteArray[i] ^ encryptionKey[(i - segmentAddress) % encryptionKey.size()]);
     }
+
+
+    return true;
 }
 
 bool PowerObfuscator::skipLast2Bytes(uint32_t iterator)
@@ -322,9 +353,9 @@ bool PowerObfuscator::skipInstructionsWithStringOrPointerReference(uint8_t* byte
     return false;
 }
 
-void PowerObfuscator::fixHeader(uint8_t* byteArray, const QString& segmentNameInSymbol, const QString& symbolName)
+bool PowerObfuscator::fixHeader(uint8_t* byteArray, const QString& segmentNameInSymbol, const QString& symbolName)
 {
-    ui.outputTextEdit->append("Replacing Header values so we can use them in our sprx");
+    ui.outputTextEdit->append("Replacing POBF Header values so we can use them in our sprx");
 
     const uint32_t elfHeaderSize = 0xF0;
 
@@ -373,7 +404,7 @@ void PowerObfuscator::fixHeader(uint8_t* byteArray, const QString& segmentNameIn
     if (!wasSymbolFound)
     {
         ui.outputTextEdit->append("Failed to find symbol " + symbolName + " in [" + segmentNameInSymbol + "] segment");
-        return;
+        return false;
     }
 
 #if 0
@@ -404,6 +435,9 @@ void PowerObfuscator::fixHeader(uint8_t* byteArray, const QString& segmentNameIn
 
     // rewrite our new header
     memcpy(byteArray + elfHeaderSize + dataSegmentAddress + symbolInfo.value, &header, sizeof(pobfHeader));
+
+    ui.outputTextEdit->append("Sucessfuly rewrote POBF header");
+    return true;
 }
 
 uint32_t PowerObfuscator::geBinaryOffsetFromSegment(const QString& segmentName)
