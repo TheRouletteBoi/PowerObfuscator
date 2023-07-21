@@ -1,5 +1,5 @@
-#ifndef _POWEROBFUSCATORAPI_H
-#define _POWEROBFUSCATORAPI_H
+#ifndef __POWEROBFUSCATOR_H__
+#define __POWEROBFUSCATOR_H__
 
 #include <types.h>
 #include <stdint.h>
@@ -59,14 +59,7 @@ namespace pobf
         char placeHolder5[60];
     };
 
-    pobfHeader pobf_header = {
-        POBF_MAGIC,
-        POBF_SIGNATURE,
-        POBF_TEXT_SEGMENT_DUMMY_VALUES,
-        POBF_DATA_SEGMENT_DUMMY_VALUES,
-        POBF_PLACEHOLDER_DUMMY_VALUES1,
-        POBF_PLACEHOLDER_DUMMY_VALUES2
-    };
+    extern pobfHeader pobf_header;
 
     namespace Encrypt
     {
@@ -1076,4 +1069,4 @@ namespace pobf
 
 
 
-#endif // _POWEROBFUSCATORAPI_H 
+#endif // __POWEROBFUSCATOR_H__ 
