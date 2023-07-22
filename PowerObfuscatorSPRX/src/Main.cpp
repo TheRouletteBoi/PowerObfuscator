@@ -4,7 +4,6 @@
 #include <sys/timer.h>
 #include <sys/syscall.h>
 #include <sys/process.h>
-#include <libpsutil.h>
 #include <PowerObfuscator.h>
 
 SYS_MODULE_INFO( PowerObfuscatorSPRX, 0, 1, 1);
@@ -45,7 +44,7 @@ NO_INLINE void ThisFuncShouldBeEncrypted003()
 
 void MainThread(uint64_t arg)
 {
-    pobf::Encrypt::RealTimeFunctionEncrypt<decltype(&MainThread)> encrypt(MainThread);
+    //pobf::Encrypt::RealTimeFunctionEncrypt<decltype(&MainThread)> encrypt(MainThread);
 
     printf("Hello from MainThread\n");
 
