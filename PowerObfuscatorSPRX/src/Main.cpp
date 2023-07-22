@@ -20,7 +20,7 @@ void ThisFuncShouldBeEncrypted001();
 int ThisFuncShouldBeEncrypted002(int left, int right);
 void ThisFuncShouldBeEncrypted003();
 
-void ThisFuncShouldBeEncrypted001()
+NO_INLINE void ThisFuncShouldBeEncrypted001()
 {
     printf("ThisFuncShouldBeEncrypted001\n");
 
@@ -31,13 +31,13 @@ void ThisFuncShouldBeEncrypted001()
     printf("value2: %d\n", value2);
 }
 
-int ThisFuncShouldBeEncrypted002(int left, int right)
+NO_INLINE int ThisFuncShouldBeEncrypted002(int left, int right)
 {
     int value = left * right;
     return value;
 }
 
-void ThisFuncShouldBeEncrypted003()
+NO_INLINE void ThisFuncShouldBeEncrypted003()
 {
     ThisFuncShouldBeEncrypted001();
     ThisFuncShouldBeEncrypted001();
@@ -45,6 +45,8 @@ void ThisFuncShouldBeEncrypted003()
 
 void MainThread(uint64_t arg)
 {
+    pobf::Encrypt::RealTimeFunctionEncrypt<decltype(&MainThread)> encrypt(MainThread);
+
     printf("Hello from MainThread\n");
 
     ThisFuncShouldBeEncrypted003();
@@ -114,7 +116,7 @@ void pobf_vxRandom2_Example()
     printf("exampleRandom2: %d\n", RndVal);
 }
 
-// A small string hasing example
+// A small string hashing example
 void pobf_vxHashing_Example()
 {
     printf("pobf_vxHashing_Example\n");
@@ -139,10 +141,6 @@ void pobf_AllStringEncryptions_Example()
     printf("ENCRYPTSTRV2 %s\n", ENCRYPTSTRV2("this string will be encrypted using V2"));
 
     printf("ENCRYPTSTRV3 %s\n", ENCRYPTSTRV3("this string will be encrypted using V3"));
-
-
-    // compile time string to hash
-    printf("vxHASH: 0x%08X\n", vxHASH("hello world!"));
 }
 
 void pobf_DumpObfuscation1_Example()

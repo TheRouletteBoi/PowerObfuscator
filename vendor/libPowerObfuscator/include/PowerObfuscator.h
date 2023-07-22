@@ -12,8 +12,9 @@ extern unsigned char const __start__Ztext[];
 extern unsigned char const __start__Zdata[];
 extern unsigned char const __start__Zrodata[];
 
-#define STATIC_ALWAYS_INLINE static inline  __attribute__((always_inline))
-#define NO_INLINE                           __attribute__((noinline))
+#define STATIC_ALWAYS_INLINE    static inline   __attribute__((always_inline))
+#define NO_STATIC_ALWAYS_INLINE inline          __attribute__((always_inline))
+#define NO_INLINE                               __attribute__((noinline))
 
 #define POBF_MAGIC 'P', 'O', 'B', 'F'
 #define POBF_SIGNATURE 0xAABBCCDD, 0x12345678, 0xEEFFEEFF 
@@ -243,52 +244,272 @@ namespace pobf
 
     namespace Encrypt
     {
-        // RAII method 
-        // EG: RealTimeEncryptFunction<decltype(&main)> encrypt(main);
-        template <class T>
-        class RealTimeEncryptFunction
+        /***
+        * mr     r4, r4
+        * rlwinm r31, r31, 0, 0x1E, 0x1E
+        * mr     r5, r5
+        *
+        * NOTE(Roulette): _16 means marker is 16 bytes long
+        */
+        #define FUNCTION_MARKER_START_16 0x7C842378, 0x57FF07BC, 0x7CA52B78
+        #define FUNCTION_MARKER_START_16_ASM() \
+                    __asm("mr     r4, r4;"                      /* \x7C\x84\x23\x78 */    \
+                          "rlwinm r31, r31, 0, 0x1E, 0x1E;"     /* \x57\xFF\x07\xBC */    \
+                          "mr     r5, r5;");                    /* \x7C\xA5\x2B\x78 */
+
+        /***
+        * mr     r5, r5
+        * rlwinm r31, r31, 0, 0x1E, 0x1E
+        * mr     r4, r4
+        *
+        * NOTE(Roulette): _16 means which marker is 16 bytes long
+        */
+        #define FUNCTION_MARKER_END_16 0x7CA52B78, 0x57FF07BC, 0x7C842378
+        #define FUNCTION_MARKER_END_16_ASM() \
+                    __asm("mr     r5, r5;"                      /* \x7C\xA5\x2B\x78 */    \
+                          "rlwinm r31, r31, 0, 0x1E, 0x1E;"     /* \x57\xFF\x07\xBC */    \
+                          "mr     r4, r4;");                    /* \x7C\x84\x23\x78 */
+
+        /***
+        * xor r3, r3, r4
+        * xor r3, r3, r4
+        */
+        #define FUNCTION_MARKER_START_XOR_8 0x7C6322787C632278
+        #define FUNCTION_MARKER_START_XOR_8_ASM() \
+                    __asm("xor %r3, %r3, %r4;"       /* \x7C\x63\x22\x78 */     \
+                            "xor %r3, %r3, %r4;");   /* \x7C\x63\x22\x78 */
+
+        /***
+        * xor r3, r3, r5
+        * xor r3, r3, r5
+        */
+        #define FUNCTION_MARKER_END_XOR_8 0x7C632A787C632A78
+        #define FUNCTION_MARKER_END_XOR_8_ASM() \
+                    __asm("xor %r3, %r3, %r5;"       /* \x7C\x63\x2A\x78 */     \
+                            "xor %r3, %r3, %r5;");   /* \x7C\x63\x2A\x78 */
+
+        /***
+        * xor r3, r3, r6
+        * xor r3, r3, r6
+        */
+        #define FUNCTION_MARKER_START_XOR2_8 0x7C6332787C633278
+        #define FUNCTION_MARKER_START_XOR2_8_ASM() \
+                    __asm("xor %r3, %r3, %r6;"       /* \x7C\x63\x32\x78 */     \
+                            "xor %r3, %r3, %r6;");   /* \x7C\x63\x32\x78 */
+
+        /***
+        * xor r3, r3, r7
+        * xor r3, r3, r7
+        */
+        #define FUNCTION_MARKER_END_XOR2_8 0x7C633A787C633A78
+        #define FUNCTION_MARKER_END_XOR2_8_ASM() \
+                    __asm("xor %r3, %r3, %r7;"       /* \x7C\x63\x3A\x78 */     \
+                            "xor %r3, %r3, %r7;");   /* \x7C\x63\x3A\x78 */
+
+        /***
+        * lis r3, 0xFFEE
+        * ori r3, r3, 0xDDCC
+        */
+        #define FUNCTION_MARKER_START_FFEEDDCC_8 0x3C60FFEE6063DDCC
+        #define FUNCTION_MARKER_START_FFEEDDCC_8_ASM() \
+                    __asm("lis %r3, 0xFFEE;"          /* \x3C\x60\xFF\xEE */    \
+                            "ori %r3, %r3, 0xDDCC;"); /* \x60\x63\xDD\xCC */
+
+        /***
+        * lis r3, 0xFFEE
+        * ori r3, r3, 0xDDCD
+        */
+        #define FUNCTION_MARKER_END_FFEEDDCD_8 0x3C60FFEE6063DDCD
+        #define FUNCTION_MARKER_END_FFEEDDCD_8_ASM() \
+                    __asm("lis %r3, 0xFFEE;"          /* \x3C\x60\xFF\xEE */    \
+                            "ori %r3, %r3, 0xDDCD;"); /* \x60\x63\xDD\xCD */
+
+        /***
+        * mr r4, r4
+        * mr r5, r5
+        *
+        * NOTE(Roulette): _8 means marker is 8 bytes long
+        */
+        #define FUNCTION_MARKER_START_MR_8 0x7C8423787CA52B78
+        #define FUNCTION_MARKER_START_MR_8_ASM() \
+                    __asm("mr r4, r4;"       /* \x7C\x84\x23\x78 */             \
+                            "mr r5, r5;");   /* \x7C\xA5\x2B\x78 */
+
+        /***
+        * mr r5, r5
+        * mr r4, r4
+        *
+        * NOTE(Roulette): _8 means marker is 8 bytes long
+        */
+        #define FUNCTION_MARKER_END_MR_8 0x7CA52B787C842378
+        #define FUNCTION_MARKER_END_MR_8_ASM() \
+                            __asm("mr r5, r5;"       /* \x7C\xA5\x2B\x78 */     \
+                                    "mr r4, r4;");   /* \x7C\x84\x23\x78 */
+
+        /***
+        * mr r4, r4
+        *
+        * NOTE(Roulette): _4 means marker is 4 bytes long
+        */
+        #define FUNCTION_MARKER1_INDIVIDUAL_4 0x7C842378
+
+        /***
+        * mr r5, r5
+        *
+        * NOTE(Roulette): _4 means marker is 4 bytes long
+        */
+        #define FUNCTION_MARKER2_INDIVIDUAL_4 0x7CA52B78
+
+
+
+        template<int A, int C, int M>
+        class LowRandom
         {
         public:
-            RealTimeEncryptFunction(T functionAddress)
-            {
+            LowRandom(uint32_t seed) : m_Seed(seed) {}
 
-            }
-            ~RealTimeEncryptFunction()
+            uint32_t Next()
             {
-
+                return m_Seed = (A * m_Seed + C) % M;
             }
+
+        private:
+            uint32_t m_Seed;
         };
-    }
 
-    namespace EncryptV2
-    {
-        bool DataCompare(const uint8_t* pbData, const uint8_t* pbMask, const char* szMask);
-        bool FindPattern(uintptr_t address, uint32_t length, uint8_t step, uint8_t* bytes, const char* mask, uint32_t* foundOffset);
-        void FindPatternsInParallel(uintptr_t address, uint32_t length, std::vector<Pattern>& patterns, std::vector<uint32_t>& foundOffsets);
-        void DecryptFunction(uint8_t* data, uint32_t startIndex, uint32_t endIndex, bool quick = false);
 
-        namespace Default
+        // EG: RealTimeFunctionEncrypt<decltype(&main)> encrypt(main);
+        template <class T>
+        class RealTimeFunctionEncrypt
         {
-            void __encryptFunctionStart(void* function, bool quick);
-            void _encryptFunctionStart(void* function, bool quick);
-            void __encryptFunctionEnd(void* function, bool quick, bool deleteData = false);
-            void _encryptFunctionEnd(void* function, bool quick, bool deleteData = false);
-        }
+        public:
+            NO_STATIC_ALWAYS_INLINE RealTimeFunctionEncrypt(T function) 
+                : m_FunctionAddress(((pobf::opd_s*)function)->func), m_EncryptionStart(0), m_EncryptionEnd(0)
+            {
+                FindMarkers();
+                Decrypt();
+                FUNCTION_MARKER_START_XOR_8_ASM();
+            }
 
-        namespace Quick
-        {
-            void __encryptFunctionStart(void* function, uint8_t* saveBuffer, uint32_t* start, uint32_t* end);
-            void _encryptFunctionStart(void* function, uint8_t* saveBuffer, uint32_t* start, uint32_t* end);
-            void _encryptFunctionEnd(uint8_t* saveBuffer, uint32_t start, uint32_t end);
-        }
+            NO_STATIC_ALWAYS_INLINE ~RealTimeFunctionEncrypt()
+            {
+                FUNCTION_MARKER_END_XOR_8_ASM();
+                Encrypt();
+#if 0
+                Erase();
+#endif
+            }
 
-        namespace Inline
-        {
-            void __encryptFunctionStart(void* function);
-            void _encryptFunctionStart(void* function);
-            void __encryptFunctionEnd(void* function);
-            void _encryptFunctionEnd(void* function);
-        }
+
+        private:
+            void FindMarkers()
+            {
+                printf("%s\n", __FUNCTION__);
+
+                if (!m_FunctionAddress)
+                    return;
+
+                uint64_t* read2Instructions = (uint64_t*)m_FunctionAddress;
+                printf("read2Instruction 0x%X\n", read2Instructions);
+
+                for (uint32_t i = 0; i < maxFunctionScanSize; i++)
+                {
+                    printf("read2Instruction in %d = 0x%016llX\n", i, read2Instructions[i]);
+                    if (read2Instructions[i] == FUNCTION_MARKER_START_XOR_8)
+                    {
+                        m_EncryptionStart = m_FunctionAddress + (i * 4);
+                        printf("Found encryption start at 0x%X\n", m_EncryptionStart);
+
+                    }
+                    else if (read2Instructions[i] == FUNCTION_MARKER_END_XOR_8)
+                    {
+                        m_EncryptionEnd = m_FunctionAddress + (i * 4) + markerSize;
+                        printf("found encryption end at 0x%X\n", m_EncryptionEnd);
+
+                        break;
+                    }
+                }
+
+
+                printf("Failed to find encryption in function 0x%X\n", m_FunctionAddress);
+            }
+
+            /***
+            * @brief check if function has encryption markers by
+            * @param maxFunctionSize estimated function size to find markers
+            */
+            bool HasMarker(uint32_t maxFunctionSize)
+            {
+                if (!m_FunctionAddress)
+                    return false;
+
+                uint64_t* readInstruction = (uint64_t*)m_FunctionAddress;
+
+                for (uint32_t i = 0; i < maxFunctionSize; i++)
+                {
+                    if (readInstruction[i] == FUNCTION_MARKER_START_XOR_8)
+                        return true;
+                }
+
+                return false;
+            }
+
+            void Encrypt()
+            {
+                if (!m_EncryptionStart)
+                    return;
+
+                for (uint32_t i = m_EncryptionStart; i < m_EncryptionEnd; i++)
+                {
+                    uint8_t byte = *(uint8_t*)(i);
+
+                    uint8_t encryptedByte = byte ^ 0x69;
+
+                    pobf::Segment::_write_process_memory((void*)i, &encryptedByte, sizeof(uint8_t));
+                }
+            }
+
+            void Decrypt()
+            {
+                if (!m_EncryptionStart)
+                    return;
+
+                for (uint32_t i = m_EncryptionStart; i < m_EncryptionEnd; i++)
+                {
+                    uint8_t byte = *(uint8_t*)(i);
+
+                    uint8_t unencryptedByte = byte ^ 0x69;
+
+                    pobf::Segment::_write_process_memory((void*)i, &unencryptedByte, sizeof(uint8_t));
+                }
+            }
+
+            void Erase()
+            {
+                if (!m_EncryptionStart)
+                    return;
+
+                for (uint32_t i = m_EncryptionStart - markerSize; i < m_EncryptionEnd + markerSize; i++)
+                {
+#if 0
+                    LowRandom<0x11111111, 0x66666666, 0x7FFFFFFF> random(vxRAND()); // use compile time random as the seed
+                    uint32_t randomByte = random.Next();
+#endif
+
+                    uint8_t nullByte = 0x00;
+                    pobf::Segment::_write_process_memory((void*)i, &nullByte, sizeof(uint8_t));
+                }
+            }
+
+
+        private:
+            uint32_t m_FunctionAddress;
+            uint32_t m_EncryptionStart;
+            uint32_t m_EncryptionEnd;
+
+            static const unsigned maxFunctionScanSize = 0x1000; /* only scan 0x1000 bytes of a function. If you have more than that I don't support you */
+            static const unsigned markerSize = 8;
+        };
     }
 
     namespace DumpObfuscation
@@ -1085,69 +1306,6 @@ namespace pobf
     }().c_str()
 
 #define ENCRYPTSTRV3(str) EnstoneStringEncrypt(str)
-
-
-
-
-        /******* DefaultEncrypt ********/
-#define encryptFunctionStart(function) \
-            void *local_encrypt_function_address = function; \
-            pobf::EncryptV2::Default::_encryptFunctionStart(local_encrypt_function_address, false);
-
-#define encryptFunctionEnd() \
-            pobf::EncryptV2::Default::_encryptFunctionEnd(local_encrypt_function_address, false);
-
-#define encryptFunctionEnd_deletedata() \
-            pobf::EncryptV2::Default::_encryptFunctionEnd(local_encrypt_function_address, false, true);
-
-
-        /******* QuickEncrypt ********/
-#define encryptFunctionStart_quick(function, bufferSize) \
-            void *local_encrypt_function_address = function; \
-            static uint8_t encryptionBuffer[bufferSize]; \
-            static uint32_t startEncryptAddress = 0; \
-            static uint32_t endEncryptAddress = 0; \
-            pobf::EncryptV2::Quick::_encryptFunctionStart(function, encryptionBuffer, &startEncryptAddress, &endEncryptAddress);
-
-#define encryptFunctionEnd_quick() \
-            pobf::EncryptV2::Quick::_encryptFunctionEnd(encryptionBuffer, startEncryptAddress, endEncryptAddress);
-
-
-        /******* InlineEncrypt ********/
-#define inline_encryptFunctionStart(function) \
-            void *local_encrypt_function_address = function; \
-            pobf::EncryptV2::Inline::_encryptFunctionStart(local_encrypt_function_address);
-
-#define inline_encryptFunctionEnd() \
-            pobf::EncryptV2::Inline::_encryptFunctionEnd(local_encrypt_function_address);
-
-
-        /******* For pattern scanning ********/
-#define StartatternDefault() \
-            __asm("xor %r3, %r3, %r4;"       /* \x7C\x63\x22\x78 */    \
-                    "xor %r3, %r3, %r4;");   /* \x7C\x63\x22\x78 */
-
-#define EndPatternDefault() \
-            __asm("xor %r3, %r3, %r5;"       /* \x7C\x63\x2A\x78 */   \
-                    "xor %r3, %r3, %r5;");   /* \x7C\x63\x2A\x78 */
-
-#define StartPatternQuick() \
-            __asm("xor %r3, %r3, %r6;"       /* \x7C\x63\x32\x78 */   \
-                    "xor %r3, %r3, %r6;");   /* \x7C\x63\x32\x78 */
-
-#define EndPatternQuick() \
-            __asm("xor %r3, %r3, %r7;"       /* \x7C\x63\x3A\x78 */   \
-                    "xor %r3, %r3, %r7;");   /* \x7C\x63\x3A\x78 */
-
-#define StartPattternThread() \
-            __asm("lis %r3, 0xFFEE;"          /* \x3C\x60\xFF\xEE */ \
-                    "ori %r3, %r3, 0xDDCC;"); /* \x60\x63\xDD\xCC */
-
-#define EndPatternThread() \
-            __asm("lis %r3, 0xFFEE;"          /* \x3C\x60\xFF\xEE */ \
-                    "ori %r3, %r3, 0xDDCD;"); /* \x60\x63\xDD\xCD */
-
-
 
 
 #endif // __POWEROBFUSCATOR_H__ 
