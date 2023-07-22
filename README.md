@@ -43,10 +43,13 @@ PowerObfuscator obfuscate your PS3 .PRX/.SPRX plugins
 
 
 # Tutorial
-1. TODO main() screenshot
-2. TODO your code example
-3. TODO show how to use app. example, symbol stripping, sign prx if you want to covert .prx to .sprx
+1. In order for your sprx to decrypt you need to add `pobf::Segment::DecryptSegments(main);`to your main(). It must be the first function 
 
+![Main Example](https://github.com/TheRouletteBoi/PowerObfuscator/blob/master/Assets/Screenshots/code_example_main.png)
+
+3. Load your prx and enter a pass-phrase which can be any type of text. The app will convert the text and make an xor key
+
+![App Example](https://github.com/TheRouletteBoi/PowerObfuscator/blob/master/Assets/Screenshots/example_app.png)
 
  
 # Building Requirements
@@ -57,8 +60,6 @@ PowerObfuscator obfuscate your PS3 .PRX/.SPRX plugins
 - [Qt plugins for Visual Studio](https://www.youtube.com/watch?v=rH2Kq2BIGVs) You will need Visual Studio 2022 or higher to build GUI app because QT extensions don't work with Visual Studio 2013 
 
 # Preview Results
-
-![Preview App](https://github.com/TheRouletteBoi/PowerObfuscator/blob/master/Assets/Screenshots/Preview.PNG)
 
 ![Preview ASM](https://github.com/TheRouletteBoi/PowerObfuscator/blob/master/Assets/Screenshots/preview_asm_code.png)
 
