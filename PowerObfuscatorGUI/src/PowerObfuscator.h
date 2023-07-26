@@ -13,6 +13,7 @@
 #include <sstream>
 #include <algorithm>
 #include <ranges>
+#include <regex>
 
 #include <Windows.h>
 
@@ -144,6 +145,15 @@ typedef struct sys_prx_libent32_t {
 #define nid_module_stop         0xAB779874
 #define nid_module_info         0xD7F43016
 
+
+struct DeobfuscateSegmentInfo
+{
+    QString segmentName;
+    uint32_t segmentAddressStart;
+    uint32_t segmentAddressEnd;
+    std::vector<uint8_t> segmentEncryptionKey;
+};
+
 class PowerObfuscator : public QMainWindow
 {
     Q_OBJECT
@@ -161,6 +171,7 @@ public:
     void stripSymbolsPrx(const std::string& fileName);
     void signPrx(const std::string& inFileName, const std::string& outFileName);
     bool obfuscateSegment(const QString& segmentName, uint8_t* byteArray, const std::vector<uint8_t>& encryptionKey);
+    bool deobfuscateSegment(const QString& segmentName, uint8_t* byteArray, const std::vector<uint8_t>& encryptionKey, uint32_t segmentAddressStart, uint32_t segmentAddressEnd);
 
     bool skipLast2Bytes(uint32_t iterator);
 
@@ -195,7 +206,7 @@ public:
     /***
     * @brief encrypts passphrase text to byte array
     * 
-    * NOTE(Roulette): improve this encryption method or change key for stronger security because the current one works.
+    * NOTE(Roulette): improve this encryption method or change key for stronger security because the current one sucks.
     */
     void encryptPassphrase(const std::string& passphrase, const std::string& key, std::vector<uint8_t>& encrypted);
 
@@ -226,6 +237,11 @@ public:
     */
     uint32_t littleToBigEndian(uint32_t value);
 
+    /***
+    * @breif checks if string has hexadecimal characters
+    */
+    bool IsHexString(const std::string& input);
+
 public slots:
     void openFile(const QString& fileName);
 
@@ -233,6 +249,8 @@ private slots:
     void on_loadPrxButton_clicked();
     void on_obfuscateButton_clicked();
     void on_deobfuscateButton_clicked();
+    void on_addSegmentsToListButton_clicked();
+    void on_generateRandomEncryptionKeyButton_clicked();
 
 private:
     Ui::PowerObfuscatorClass ui;
@@ -249,4 +267,5 @@ private:
     QFileInfo m_qFileInfo;
     QDataStream m_qDataStream;
     QByteArray m_qBytesArray;
+    std::vector<DeobfuscateSegmentInfo> m_segmentsToDeobfuscate;
 };

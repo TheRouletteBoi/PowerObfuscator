@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>734</width>
-    <height>443</height>
+    <width>837</width>
+    <height>552</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -31,7 +31,7 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>80</width>
+      <width>121</width>
       <height>30</height>
      </rect>
     </property>
@@ -39,66 +39,12 @@
      <string>Load PRX</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="obfuscateButton">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>140</y>
-      <width>80</width>
-      <height>30</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Obfuscate</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="deobfuscateButton">
-    <property name="geometry">
-     <rect>
-      <x>370</x>
-      <y>140</y>
-      <width>80</width>
-      <height>30</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Deobfuscate</string>
-    </property>
-   </widget>
-   <widget class="QTextEdit" name="obfuscatePassphraseTextEdit">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>80</y>
-      <width>300</width>
-      <height>51</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="obfuscatePassphraseLabel">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>40</y>
-      <width>251</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>14</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>Obfuscate With Pass-phrase</string>
-    </property>
-   </widget>
    <widget class="QComboBox" name="filePathComboBox">
     <property name="geometry">
      <rect>
-      <x>100</x>
+      <x>140</x>
       <y>10</y>
-      <width>621</width>
+      <width>691</width>
       <height>30</height>
      </rect>
     </property>
@@ -107,8 +53,8 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>200</y>
-      <width>711</width>
+      <y>310</y>
+      <width>811</width>
       <height>231</height>
      </rect>
     </property>
@@ -116,11 +62,252 @@
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QLabel" name="outputLabel">
+   <widget class="QGroupBox" name="deobfuscateGroupBox">
+    <property name="geometry">
+     <rect>
+      <x>390</x>
+      <y>50</y>
+      <width>441</width>
+      <height>221</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Deobfuscate</string>
+    </property>
+    <widget class="QLabel" name="deobfuscateSegmentEncryptionKeyLabel">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>140</y>
+       <width>181</width>
+       <height>30</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Segment Encryption Key</string>
+     </property>
+    </widget>
+    <widget class="QTextEdit" name="deobfuscateSegmentAddressStartTextEdit">
+     <property name="geometry">
+      <rect>
+       <x>190</x>
+       <y>60</y>
+       <width>241</width>
+       <height>31</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QTextEdit" name="deobfuscateSegmentAddressEndTextEdit">
+     <property name="geometry">
+      <rect>
+       <x>190</x>
+       <y>100</y>
+       <width>241</width>
+       <height>31</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QTextEdit" name="deobfuscateSegmentEncryptionKeyTextEdit">
+     <property name="geometry">
+      <rect>
+       <x>190</x>
+       <y>140</y>
+       <width>241</width>
+       <height>31</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="deobfuscateSegmentNameLabel">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>171</width>
+       <height>30</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Segment Name</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="deobfuscateSegmentAddressStartLabel">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>60</y>
+       <width>171</width>
+       <height>30</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Segment Address Start</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="deobfuscateSegmentAddressEndLabel">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>100</y>
+       <width>171</width>
+       <height>30</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Segment Address End</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="deobfuscateButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>180</y>
+       <width>171</width>
+       <height>30</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Deobfuscate Segments</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="addSegmentsToListButton">
+     <property name="geometry">
+      <rect>
+       <x>190</x>
+       <y>180</y>
+       <width>241</width>
+       <height>30</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Add Segment To List</string>
+     </property>
+    </widget>
+    <widget class="QTextEdit" name="deobfuscateSegmentNameTextEdit">
+     <property name="geometry">
+      <rect>
+       <x>190</x>
+       <y>20</y>
+       <width>241</width>
+       <height>31</height>
+      </rect>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="obfuscateGroupBox">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>160</y>
+      <y>50</y>
+      <width>361</width>
+      <height>101</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Obfuscate</string>
+    </property>
+    <widget class="QCheckBox" name="signPRXCheckBox">
+     <property name="geometry">
+      <rect>
+       <x>260</x>
+       <y>60</y>
+       <width>121</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Sign PRX</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="stripSymbolsCheckBox">
+     <property name="geometry">
+      <rect>
+       <x>130</x>
+       <y>60</y>
+       <width>121</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Strip Symbols</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="obfuscateButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>60</y>
+       <width>111</width>
+       <height>30</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Obfuscate</string>
+     </property>
+    </widget>
+    <widget class="QTextEdit" name="encryptionKeyTextEdit">
+     <property name="geometry">
+      <rect>
+       <x>130</x>
+       <y>20</y>
+       <width>221</width>
+       <height>41</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="encryptionKeyLabel">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>111</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Encryption Key</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QLabel" name="outputLabel">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>270</y>
       <width>91</width>
       <height>41</height>
      </rect>
@@ -134,69 +321,44 @@
      <string>Output</string>
     </property>
    </widget>
-   <widget class="QLabel" name="deobfuscateKeyLabel">
+   <widget class="QGroupBox" name="generateEncryptionKeyGroupBox">
     <property name="geometry">
      <rect>
-      <x>370</x>
-      <y>40</y>
-      <width>201</width>
-      <height>41</height>
+      <x>10</x>
+      <y>160</y>
+      <width>361</width>
+      <height>111</height>
      </rect>
     </property>
-    <property name="font">
-     <font>
-      <pointsize>14</pointsize>
-     </font>
+    <property name="title">
+     <string>Generate Encryption Key</string>
     </property>
-    <property name="text">
-     <string>Deobfuscate With Key</string>
-    </property>
-   </widget>
-   <widget class="QTextEdit" name="deobfuscateKeyTextEdit">
-    <property name="geometry">
-     <rect>
-      <x>370</x>
-      <y>80</y>
-      <width>300</width>
-      <height>51</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="stripSymbolsCheckBox">
-    <property name="geometry">
-     <rect>
-      <x>100</x>
-      <y>130</y>
-      <width>121</width>
-      <height>51</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>12</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>Strip Symbols</string>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="signPRXCheckBox">
-    <property name="geometry">
-     <rect>
-      <x>230</x>
-      <y>130</y>
-      <width>111</width>
-      <height>51</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>12</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>Sign PRX</string>
-    </property>
+    <widget class="QPushButton" name="generateRandomEncryptionKeyButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>341</width>
+       <height>30</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Generate Random Encryption Key</string>
+     </property>
+    </widget>
+    <widget class="QTextEdit" name="randomEncryptionKeyTextEdit">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>60</y>
+       <width>341</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
    </widget>
   </widget>
  </widget>

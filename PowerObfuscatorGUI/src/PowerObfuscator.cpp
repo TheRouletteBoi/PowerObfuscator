@@ -35,6 +35,7 @@ void PowerObfuscator::openFile(const QString& fileName)
     m_sections.clear();
     m_symbolsInfo.clear();
     m_qBytesArray.clear();
+    m_segmentsToDeobfuscate.clear();
 
     std::string fileNameStdString = fileName.toStdString();
     getElfInfo(fileNameStdString);
@@ -58,21 +59,26 @@ void PowerObfuscator::on_obfuscateButton_clicked()
     if (!m_doesfileExist)
         return;
 
-    QString passPhraseString = ui.obfuscatePassphraseTextEdit->toPlainText();
-    if (passPhraseString.isEmpty())
+    QString encryptionKeyString = ui.encryptionKeyTextEdit->toPlainText();
+    if (encryptionKeyString.isEmpty())
     {
-        QMessageBox::critical(this, windowTitle(), "Pass-phrase can not be empty.");
+        QMessageBox::critical(this, windowTitle(), "Encryption key can not be empty.");
         return;
     }
 
-    if (passPhraseString.size() > 64)
+    if (encryptionKeyString.size() != 64)
     {
-        QMessageBox::critical(this, windowTitle(), "Pass-phrase is too long.");
+        QMessageBox::critical(this, windowTitle(), "Encryption key must be 64 bytes long.");
+        return;
+    }
+
+    if (!IsHexString(encryptionKeyString.toStdString()))
+    {
+        QMessageBox::critical(this, windowTitle(), "Key must be in hex format with no '0x' and no spaces.");
         return;
     }
     
-    std::vector<uint8_t> keyBytes;
-    encryptPassphrase(passPhraseString.toStdString(), "PowerObfuscator", keyBytes);
+    std::vector<uint8_t> encryptionKey = hexStringToBytes(encryptionKeyString.toStdString());
 
     ui.outputTextEdit->append("----- Starting prx obfuscation -----");
 
@@ -113,7 +119,7 @@ void PowerObfuscator::on_obfuscateButton_clicked()
     }
 
     // Obfuscate [.data] segment
-    bool statusDataSegment = obfuscateSegment(".data", byteArray, keyBytes);
+    bool statusDataSegment = obfuscateSegment(".data", byteArray, encryptionKey);
     if (!statusDataSegment)
     {
         ui.outputTextEdit->append("ERROR: Unable to encrypt prx, Failed to obfuscate .data segment");
@@ -122,7 +128,7 @@ void PowerObfuscator::on_obfuscateButton_clicked()
     }
 
     // Obfuscate [.rodata] segment
-    bool statusRodataSegment = obfuscateSegment(".rodata", byteArray, keyBytes);
+    bool statusRodataSegment = obfuscateSegment(".rodata", byteArray, encryptionKey);
     if (!statusRodataSegment)
     {
         ui.outputTextEdit->append("ERROR: Unable to encrypt prx, Failed to obfuscate .rodata segment");
@@ -131,7 +137,7 @@ void PowerObfuscator::on_obfuscateButton_clicked()
     }
 
     // Obfuscate [.text] segment
-    bool statusTextSegment = obfuscateSegment(".text", byteArray, keyBytes);
+    bool statusTextSegment = obfuscateSegment(".text", byteArray, encryptionKey);
     if (!statusTextSegment)
     {
         ui.outputTextEdit->append("ERROR: Unable to encrypt prx, Failed to obfuscate .text segment");
@@ -141,61 +147,6 @@ void PowerObfuscator::on_obfuscateButton_clicked()
 
     // Save obfuscated prx file
     saveFileWithPrefix("obf_", byteArray, true);
-
-    printEncryptionKeyForPrx(keyBytes);
-}
-
-void PowerObfuscator::on_deobfuscateButton_clicked()
-{
-#if 0
-    if (!m_doesfileExist)
-        return;
-
-    QString keyString = ui.deobfuscateKeyTextEdit->toPlainText();
-    if (keyString.isEmpty())
-    {
-        QMessageBox::critical(this, windowTitle(), "Key can not be empty.");
-        return;
-    }
-
-    if (keyString.size() != 64)
-    {
-        QMessageBox::critical(this, windowTitle(), "Key must be 64 bytes long.");
-        return;
-    }
-
-    std::vector<uint8_t> keyBytes = hexStringToBytes(keyString.toStdString());
-    if (keyBytes.empty())
-        return;
-
-    ui.outputTextEdit->append("----- Starting prx deobfuscation -----");
-
-    if (m_sections.size() <= 1)
-    {
-        ui.outputTextEdit->append("ERROR: Unable to encrypt prx, No segments found.");
-        m_qFile.close();
-        return;
-    }
-
-    ui.outputTextEdit->append("Reading file buffer");
-
-    // Read file buffer
-    std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(m_fileSize);
-    uint8_t* byteArray = buffer.get();
-    int readBytes = m_qDataStream.readRawData(reinterpret_cast<char*>(byteArray), m_fileSize);
-
-    // Deobfuscate [.data] segment
-    obfuscateSegment(".data", byteArray, keyBytes);
-
-    // Deobfuscate [.rodata] segment
-    obfuscateSegment(".rodata", byteArray, keyBytes);
-
-    // Deobfuscate [.text] segment
-    obfuscateSegment(".text", byteArray, keyBytes);
-
-    // Save deobfuscated prx file
-    saveFileWithPrefix("deobf_", byteArray, false);
-#endif
 }
 
 bool PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byteArray, const std::vector<uint8_t>& encryptionKey)
@@ -278,9 +229,206 @@ bool PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byte
         }
 
 #if 0
-        byteArray[i] = (byteArray[i] ^ 0x69); // debug encryption key
+        byteArray[i] = (byteArray[i] ^ 0x69); // debug encryption key 
 #else
         byteArray[i] = (byteArray[i] ^ encryptionKey[(i - segmentAddress) % encryptionKey.size()]);
+#endif
+    }
+
+
+    return true;
+}
+
+#if 0
+#include <random>
+std::vector<uint8_t> generateRandomEncryptionKey() 
+{
+    std::string characters = "0123456789ABCDEF";
+    std::vector<uint8_t> encryptionKey;
+    std::random_device randomDevice;
+    std::mt19937 randomEngine(randomDevice());
+
+    std::uniform_int_distribution<uint32_t> distribution(0, characters.size() - 1);
+
+    for (int i = 0; i < 64; i++)
+        encryptionKey.push_back(characters[distribution(randomEngine)]);
+
+    return encryptionKey;
+}
+#endif
+
+void PowerObfuscator::on_generateRandomEncryptionKeyButton_clicked()
+{
+    //std::vector<uint8_t> randomEncryptionKey;
+    //encryptPassphrase("$2mQ8!zXr#9aE6vG5dC1pN7sL!3kYfT@4uB2nW*mA", "K#J9$2dW!mz7@Lp5qA^vN8*cE&gT3hYbG6+sR4oX1", randomEncryptionKey);
+    //std::vector<uint8_t> randomEncryptionKey = generateRandomEncryptionKey();
+    //printEncryptionKeyForPrx(randomEncryptionKey);
+}
+
+void PowerObfuscator::on_deobfuscateButton_clicked()
+{
+    if (!m_doesfileExist)
+        return;
+
+    if (m_segmentsToDeobfuscate.empty())
+    {
+        QMessageBox::critical(this, windowTitle(), "Please Add Segment Information.");
+        return;
+    }
+
+    ui.outputTextEdit->append("----- Starting prx deobfuscation -----");
+
+    ui.outputTextEdit->append("Reading file buffer");
+
+    // Read file buffer
+    std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(m_fileSize);
+    uint8_t* byteArray = buffer.get();
+    int readBytes = m_qDataStream.readRawData(reinterpret_cast<char*>(byteArray), m_fileSize);
+
+    // Deobfuscate segments
+    for (auto segment : m_segmentsToDeobfuscate)
+        deobfuscateSegment(segment.segmentName, byteArray, segment.segmentEncryptionKey, segment.segmentAddressStart, segment.segmentAddressEnd);
+
+    // Save deobfuscated prx file
+    saveFileWithPrefix("deobf_", byteArray, false);
+}
+
+void PowerObfuscator::on_addSegmentsToListButton_clicked()
+{
+    if (!m_doesfileExist)
+        return;
+
+    QString segmentKeyString = ui.deobfuscateSegmentEncryptionKeyTextEdit->toPlainText();
+    if (segmentKeyString.isEmpty())
+    {
+        QMessageBox::critical(this, windowTitle(), "Encryption Key can not be empty.");
+        return;
+    }
+
+    if (segmentKeyString.size() != 64)
+    {
+        QMessageBox::critical(this, windowTitle(), "Encryption Key must be 64 bytes long.");
+        return;
+    }
+
+    if (!IsHexString(segmentKeyString.toStdString()))
+    {
+        QMessageBox::critical(this, windowTitle(), "Encryption Key must be in hex format with no '0x' and no spaces.");
+        return;
+    }
+
+    QString segmentName = ui.deobfuscateSegmentNameTextEdit->toPlainText();
+    if (segmentName.isEmpty())
+    {
+        QMessageBox::critical(this, windowTitle(), "Segment Name can not be empty.");
+        return;
+    }
+
+    QString segmentAddressStartString = ui.deobfuscateSegmentAddressStartTextEdit->toPlainText().trimmed();
+    if (segmentAddressStartString.isEmpty())
+    {
+        QMessageBox::critical(this, windowTitle(), "Segment Address Start can not be empty.");
+        return;
+    }
+
+    QString segmentAddressEndString = ui.deobfuscateSegmentAddressEndTextEdit->toPlainText().trimmed();
+    if (segmentAddressEndString.isEmpty())
+    {
+        QMessageBox::critical(this, windowTitle(), "Segment Address End can not be empty.");
+        return;
+    }
+
+    ui.outputTextEdit->append("----- Adding [" + segmentName + "] to deobfuscation list -----");
+
+    bool isOk{};
+    uint segmentAddressStart = segmentAddressStartString.toUInt(&isOk, 16);
+    if (!isOk)
+    {
+        QMessageBox::critical(this, windowTitle(), "Invalid Segment Address Start.");
+        return;
+    }
+
+    if (segmentAddressStart > m_fileSize)
+    {
+        QMessageBox::critical(this, windowTitle(), "Segment Address Start too large.");
+        return;
+    }
+
+    uint segmentAddressEnd = segmentAddressEndString.toUInt(&isOk, 16);
+    if (!isOk)
+    {
+        QMessageBox::critical(this, windowTitle(), "Invalid Segment Address End.");
+        return;
+    }
+
+    if (segmentAddressEnd > m_fileSize)
+    {
+        QMessageBox::critical(this, windowTitle(), "Segment Address End too large.");
+        return;
+    }
+
+    std::vector<uint8_t> encryptionKey = hexStringToBytes(segmentKeyString.toStdString());
+
+    ui.outputTextEdit->append("Start Address " + segmentAddressStartString);
+    ui.outputTextEdit->append("End Address " + segmentAddressEndString);
+    ui.outputTextEdit->append("Segment Key " + segmentKeyString);
+
+    m_segmentsToDeobfuscate.emplace_back(segmentName, segmentAddressStart, segmentAddressEnd, encryptionKey);
+
+    ui.deobfuscateSegmentNameTextEdit->clear();
+    ui.deobfuscateSegmentAddressStartTextEdit->clear();
+    ui.deobfuscateSegmentAddressEndTextEdit->clear();
+}
+
+bool PowerObfuscator::deobfuscateSegment(const QString& segmentName, uint8_t* byteArray, const std::vector<uint8_t>& encryptionKey, uint32_t segmentAddressStart, uint32_t segmentAddressEnd)
+{
+    ui.outputTextEdit->append("Deobfuscating segment from 0x" + QString::number(segmentAddressStart, 16) + " to 0x" + QString::number(segmentAddressEnd, 16));
+
+    const uint32_t elfHeaderSize = 0xF0;
+
+    qDebug() << "----- " << segmentName << " segment -----";
+    qDebug() << "Segment Address: " << Qt::hex << Qt::showbase << segmentAddressStart;
+    qDebug() << "Segment Size: " << Qt::hex << Qt::showbase << segmentAddressEnd;
+
+    segmentAddressStart += elfHeaderSize;
+    segmentAddressEnd += elfHeaderSize;
+
+    qDebug() << "Segment Address With ELF Header: " << Qt::hex << Qt::showbase << segmentAddressStart;
+    qDebug() << "Segment Size With ELF Header: " << Qt::hex << Qt::showbase << segmentAddressEnd;
+
+    ui.outputTextEdit->append("Decrypting [" + segmentName + "] segment");
+
+    for (uint32_t i = segmentAddressStart; i < segmentAddressEnd; i++)
+    {
+
+#if 0
+        // Skip undefined data
+        if (byteArray[i] == 0)
+            continue;
+#endif
+
+        if (segmentName == ".text")
+        {
+            // Skip the main() function
+            // TODO(Roulette): need a way to get main() without symbols
+
+#if 0
+            // Skip instructions with string references 
+            if (skipInstructionsWithStringOrPointerReference(byteArray, segmentAddressStart, segmentAddressEnd, mainInfo, i))
+                continue;
+#endif
+
+            if (skipLast2Bytes(i))
+                continue;
+        }
+
+        // Skip pobf_header structure
+        // TODO(Roulette): need a way to find pobf_header with symbols
+
+#if 0
+        byteArray[i] = (byteArray[i] ^ 0x69); // debug encryption key 
+#else
+        byteArray[i] = (byteArray[i] ^ encryptionKey[(i - segmentAddressStart) % encryptionKey.size()]);
 #endif
     }
 
@@ -1153,4 +1301,11 @@ uint32_t PowerObfuscator::bigToLittleEndian(uint32_t value)
 uint32_t PowerObfuscator::littleToBigEndian(uint32_t value) 
 {
     return std::endian::native == std::endian::big ? value : std::byteswap(value);
+}
+
+bool PowerObfuscator::IsHexString(const std::string& input)
+{
+    const std::regex hexRegex("^[0-9a-fA-F]+$");
+
+    return std::regex_match(input, hexRegex);
 }
