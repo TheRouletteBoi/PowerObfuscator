@@ -277,12 +277,11 @@ bool PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byte
                 continue;
         }
 
-
-        //TODO(Roulette): temporarily here until prx obfuscation is finished
-        byteArray[i] = (byteArray[i] ^ 0x69);
-
-        //TODO(Roulette): uncomment this code when prx obfuscation is finished
-        //byteArray[i] = (byteArray[i] ^ encryptionKey[(i - segmentAddress) % encryptionKey.size()]);
+#if 0
+        byteArray[i] = (byteArray[i] ^ 0x69); // debug encryption key
+#else
+        byteArray[i] = (byteArray[i] ^ encryptionKey[(i - segmentAddress) % encryptionKey.size()]);
+#endif
     }
 
 
@@ -570,7 +569,7 @@ void PowerObfuscator::printEncryptionKeyForPrx(const std::vector<uint8_t>& keyBy
 {
     ui.outputTextEdit->append("\n----- Use this key in your sprx code -----");
     std::stringstream ss;
-    ss << "uint8_t key[" << keyBytes.size() << "] = {";
+    ss << "static uint8_t encryptionKey[" << keyBytes.size() << "] = {";
 
     auto byteView = keyBytes | std::views::transform([](uint8_t byte) {
         return std::format(" 0x{:02X}", byte);
@@ -581,7 +580,7 @@ void PowerObfuscator::printEncryptionKeyForPrx(const std::vector<uint8_t>& keyBy
     {
         if (!firstByte) 
         {
-            ss << ", ";
+            ss << ",";
         }
         else 
         {

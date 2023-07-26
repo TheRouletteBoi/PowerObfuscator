@@ -192,7 +192,13 @@ public:
     */
     std::string trim(std::string_view str);
 
+    /***
+    * @brief encrypts passphrase text to byte array
+    * 
+    * NOTE(Roulette): improve this encryption method or change key for stronger security because the current one works.
+    */
     void encryptPassphrase(const std::string& passphrase, const std::string& key, std::vector<uint8_t>& encrypted);
+
     void printEncryptionKeyForPrx(const std::vector<uint8_t>& keyBytes);
 
     /***
