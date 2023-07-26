@@ -180,6 +180,9 @@ namespace pobf
             uint32_t headerStart = (uint32_t)&pobf_header;
             uint32_t headerEnd = headerStart + sizeof(pobfHeader) + 3;
 
+            // Replace this key with the one provided by PowerObfuscatorGUI
+            static uint8_t encryptionKey[64] = { 0x24, 0x0A, 0x04, 0x11, 0x06, 0x2A, 0x11, 0x12, 0x01, 0x16, 0x10, 0x15, 0x00, 0x0A, 0x01, 0x24, 0x1B, 0x12, 0x16, 0x06, 0x3B, 0x07, 0x15, 0x01, 0x07, 0x06, 0x12, 0x00, 0x1B, 0x17, 0x23, 0x1B, 0x03, 0x00, 0x01, 0x3B, 0x16, 0x03, 0x06, 0x07, 0x17, 0x04, 0x07, 0x1B, 0x06, 0x35, 0x1C, 0x03, 0x11, 0x17, 0x3C, 0x16, 0x12, 0x10, 0x00, 0x17, 0x15, 0x11, 0x1C, 0x06, 0x24, 0x0A, 0x04, 0x11 };
+
             for (uint32_t i = dataSegmentStart; i < dataSegmentEnd; i++)
             {
                 // skip pobf_header
@@ -189,7 +192,8 @@ namespace pobf
                 // read 1 byte at a time
                 uint8_t byte = *(uint8_t*)(i);
 
-                uint8_t unencryptedByte = byte ^ 0x69;
+                //uint8_t unencryptedByte = byte ^ 0x69;
+                uint8_t unencryptedByte = (byte ^ encryptionKey[(i - dataSegmentStart) % sizeof(encryptionKey)]);
                 //printf("encryptedByte 0x%X unencryptedByte 0x%02X at 0x%X\n", byte, unencryptedByte, i);
 
                 _write_process_memory((void*)i, &unencryptedByte, sizeof(uint8_t));
@@ -205,7 +209,8 @@ namespace pobf
                 // read 1 byte at a time
                 uint8_t byte = *(uint8_t*)(i);
 
-                uint8_t unencryptedByte = byte ^ 0x69;
+                //uint8_t unencryptedByte = byte ^ 0x69;
+                uint8_t unencryptedByte = (byte ^ encryptionKey[(i - rodataSegmentStart) % sizeof(encryptionKey)]);
                 //printf("encryptedByte 0x%X unencryptedByte 0x%02X at 0x%X\n", byte, unencryptedByte, i);
 
                 _write_process_memory((void*)i, &unencryptedByte, sizeof(uint8_t));
@@ -236,7 +241,8 @@ namespace pobf
                 // read 1 byte at a time
                 uint8_t byte = *(uint8_t*)(i);
 
-                uint8_t unencryptedByte = byte ^ 0x69;
+                //uint8_t unencryptedByte = byte ^ 0x69;
+                uint8_t unencryptedByte = (byte ^ encryptionKey[(i - textSegmentStart) % sizeof(encryptionKey)]);
                 //printf("encryptedByte 0x%X unencryptedByte 0x%02X at 0x%X\n", byte, unencryptedByte, i);
 
                 _write_process_memory((void*)i, &unencryptedByte, sizeof(uint8_t));
@@ -1287,6 +1293,8 @@ namespace pobf
 
 
 /************* VxObfuscator *******************/
+// Disable warning 69 'integer conversion resulted in truncation'
+#pragma diag_suppress 69
 
 // Compile-time hashing macro, hash values changes using the first pseudorandom number in sequence
 #define vxHASH(Str) (uint32_t)(pobf::String_Vx::vxCplConstantify<pobf::String_Vx::vxCplHash(Str)>::Value ^ pobf::String_Vx::vxCplConstantify<pobf::String_Vx::vxCplRandom(1)>::Value)
