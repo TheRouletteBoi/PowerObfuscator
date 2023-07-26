@@ -239,30 +239,10 @@ bool PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byte
     return true;
 }
 
-#if 0
-#include <random>
-std::vector<uint8_t> generateRandomEncryptionKey() 
-{
-    std::string characters = "0123456789ABCDEF";
-    std::vector<uint8_t> encryptionKey;
-    std::random_device randomDevice;
-    std::mt19937 randomEngine(randomDevice());
-
-    std::uniform_int_distribution<uint32_t> distribution(0, characters.size() - 1);
-
-    for (int i = 0; i < 64; i++)
-        encryptionKey.push_back(characters[distribution(randomEngine)]);
-
-    return encryptionKey;
-}
-#endif
-
 void PowerObfuscator::on_generateRandomEncryptionKeyButton_clicked()
 {
-    //std::vector<uint8_t> randomEncryptionKey;
-    //encryptPassphrase("$2mQ8!zXr#9aE6vG5dC1pN7sL!3kYfT@4uB2nW*mA", "K#J9$2dW!mz7@Lp5qA^vN8*cE&gT3hYbG6+sR4oX1", randomEncryptionKey);
-    //std::vector<uint8_t> randomEncryptionKey = generateRandomEncryptionKey();
-    //printEncryptionKeyForPrx(randomEncryptionKey);
+    std::vector<uint8_t> randomEncryptionKey = generateRandomEncryptionKey();
+    printEncryptionKeyForPrx(randomEncryptionKey);
 }
 
 void PowerObfuscator::on_deobfuscateButton_clicked()
@@ -1220,10 +1200,19 @@ std::string PowerObfuscator::trim(std::string_view str)
     return std::ranges::to<std::string>(trimmedRange);
 }
 
-void PowerObfuscator::encryptPassphrase(const std::string& passphrase, const std::string& key, std::vector<uint8_t>& encrypted)
+std::vector<uint8_t> PowerObfuscator::generateRandomEncryptionKey()
 {
-    for (size_t i = 0; encrypted.size() < 64; ++i)
-        encrypted.push_back(passphrase[i % passphrase.size()] ^ key[i % key.size()]);
+    std::string characters = "0123456789ABCDEF";
+    std::vector<uint8_t> encryptionKey;
+    std::random_device randomDevice;
+    std::mt19937 randomEngine(randomDevice());
+
+    std::uniform_int_distribution<uint32_t> distribution(0, characters.size() - 1);
+
+    for (int i = 0; i < 64; i++)
+        encryptionKey.push_back(characters[distribution(randomEngine)]);
+
+    return encryptionKey;
 }
 
 std::vector<uint8_t> PowerObfuscator::hexStringToBytes(const std::string& hexString)
