@@ -358,6 +358,8 @@ bool PowerObfuscator::deobfuscateSegment(const QString& segmentName, uint8_t* by
 {
     const uint32_t elfHeaderSize = 0xF0;
 
+    ui.outputTextEdit->append("Decrypting [" + segmentName + "] segment from 0x" + QString::number(segmentAddressStart, 16) + " to 0x" + QString::number(segmentAddressEnd, 16));
+
     qDebug() << "----- " << segmentName << " segment -----";
     qDebug() << "Segment Address: " << Qt::hex << Qt::showbase << segmentAddressStart;
     qDebug() << "Segment Size: " << Qt::hex << Qt::showbase << segmentAddressEnd;
@@ -367,8 +369,6 @@ bool PowerObfuscator::deobfuscateSegment(const QString& segmentName, uint8_t* by
 
     qDebug() << "Segment Address With ELF Header: " << Qt::hex << Qt::showbase << segmentAddressStart;
     qDebug() << "Segment Size With ELF Header: " << Qt::hex << Qt::showbase << segmentAddressEnd;
-
-    ui.outputTextEdit->append("Decrypting [" + segmentName + "] segment from 0x" + QString::number(segmentAddressStart, 16) + " to 0x" + QString::number(segmentAddressEnd, 16));
 
     for (uint32_t i = segmentAddressStart; i < segmentAddressEnd; i++)
     {
