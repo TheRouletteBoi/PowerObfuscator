@@ -66,9 +66,9 @@ void PowerObfuscator::on_obfuscateButton_clicked()
         return;
     }
 
-    if (encryptionKeyString.size() != 64)
+    if (encryptionKeyString.size() != 128)
     {
-        QMessageBox::critical(this, windowTitle(), "Encryption key must be 64 bytes long.");
+        QMessageBox::critical(this, windowTitle(), "Encryption Key must be 128 characters which is the equivalent to 64 bytes.");
         return;
     }
 
@@ -279,9 +279,9 @@ void PowerObfuscator::on_addSegmentsToListButton_clicked()
         return;
     }
 
-    if (segmentKeyString.size() != 64)
+    if (segmentKeyString.size() != 128)
     {
-        QMessageBox::critical(this, windowTitle(), "Encryption Key must be 64 bytes long.");
+        QMessageBox::critical(this, windowTitle(), "Encryption Key must be 128 characters which is the equivalent to 64 bytes.");
         return;
     }
 
@@ -1192,17 +1192,17 @@ std::string PowerObfuscator::trim(std::string_view str)
     return std::ranges::to<std::string>(trimmedRange);
 }
 
-std::vector<uint8_t> PowerObfuscator::generateRandomEncryptionKey()
+std::string PowerObfuscator::generateRandomEncryptionKey()
 {
     std::string characters = "0123456789ABCDEF";
-    std::vector<uint8_t> encryptionKey;
+    std::string encryptionKey;
     std::random_device randomDevice;
     std::mt19937 randomEngine(randomDevice());
 
     std::uniform_int_distribution<uint32_t> distribution(0, characters.size() - 1);
 
-    for (int i = 0; i < 64; i++)
-        encryptionKey.push_back(characters[distribution(randomEngine)]);
+    for (int i = 0; i < 64 * 2; i++)
+        encryptionKey += characters[distribution(randomEngine)];
 
     return encryptionKey;
 }

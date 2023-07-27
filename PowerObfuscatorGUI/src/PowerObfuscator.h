@@ -204,7 +204,7 @@ public:
     */
     std::string trim(std::string_view str);
 
-    std::vector<uint8_t> generateRandomEncryptionKey();
+    std::string generateRandomEncryptionKey();
     void printEncryptionKeyForPrx(const std::vector<uint8_t>& keyBytes);
 
     /***
