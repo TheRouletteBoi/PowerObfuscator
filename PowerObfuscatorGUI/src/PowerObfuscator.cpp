@@ -239,12 +239,6 @@ bool PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byte
     return true;
 }
 
-void PowerObfuscator::on_generateRandomEncryptionKeyButton_clicked()
-{
-    std::vector<uint8_t> randomEncryptionKey = generateRandomEncryptionKey();
-    printEncryptionKeyForPrx(randomEncryptionKey);
-}
-
 void PowerObfuscator::on_deobfuscateButton_clicked()
 {
     if (!m_doesfileExist)
@@ -266,7 +260,7 @@ void PowerObfuscator::on_deobfuscateButton_clicked()
     int readBytes = m_qDataStream.readRawData(reinterpret_cast<char*>(byteArray), m_fileSize);
 
     // Deobfuscate segments
-    for (auto segment : m_segmentsToDeobfuscate)
+    for (const auto& segment : m_segmentsToDeobfuscate)
         deobfuscateSegment(segment.segmentName, byteArray, segment.segmentEncryptionKey, segment.segmentAddressStart, segment.segmentAddressEnd);
 
     // Save deobfuscated prx file
@@ -362,8 +356,6 @@ void PowerObfuscator::on_addSegmentsToListButton_clicked()
 
 bool PowerObfuscator::deobfuscateSegment(const QString& segmentName, uint8_t* byteArray, const std::vector<uint8_t>& encryptionKey, uint32_t segmentAddressStart, uint32_t segmentAddressEnd)
 {
-    ui.outputTextEdit->append("Deobfuscating segment from 0x" + QString::number(segmentAddressStart, 16) + " to 0x" + QString::number(segmentAddressEnd, 16));
-
     const uint32_t elfHeaderSize = 0xF0;
 
     qDebug() << "----- " << segmentName << " segment -----";
@@ -376,7 +368,7 @@ bool PowerObfuscator::deobfuscateSegment(const QString& segmentName, uint8_t* by
     qDebug() << "Segment Address With ELF Header: " << Qt::hex << Qt::showbase << segmentAddressStart;
     qDebug() << "Segment Size With ELF Header: " << Qt::hex << Qt::showbase << segmentAddressEnd;
 
-    ui.outputTextEdit->append("Decrypting [" + segmentName + "] segment");
+    ui.outputTextEdit->append("Decrypting [" + segmentName + "] segment from 0x" + QString::number(segmentAddressStart, 16) + " to 0x" + QString::number(segmentAddressEnd, 16));
 
     for (uint32_t i = segmentAddressStart; i < segmentAddressEnd; i++)
     {
@@ -403,7 +395,7 @@ bool PowerObfuscator::deobfuscateSegment(const QString& segmentName, uint8_t* by
         }
 
         // Skip pobf_header structure
-        // TODO(Roulette): need a way to find pobf_header with symbols
+        // TODO(Roulette): need a way to find pobf_header without symbols. Use scan for 'P' 'O' 'B' 'F' or scna for POBF_SIGNATURE
 
 #if 0
         byteArray[i] = (byteArray[i] ^ 0x69); // debug encryption key 
