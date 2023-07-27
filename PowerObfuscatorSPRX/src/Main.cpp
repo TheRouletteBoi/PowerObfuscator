@@ -44,8 +44,6 @@ NO_INLINE void ThisFuncShouldBeEncrypted003()
 
 void MainThread(uint64_t arg)
 {
-    //pobf::Encrypt::RealTimeFunctionEncrypt<decltype(&MainThread)> encrypt(MainThread);
-
     printf("Hello from MainThread\n");
 
     ThisFuncShouldBeEncrypted003();
@@ -164,6 +162,15 @@ void pobf_DumpObfuscation2_Example()
 
     // Example using multiple types 
     pobf::DumpObfuscation::ReplaceByType(pobf::DumpObfuscation::LisR3 | pobf::DumpObfuscation::LisR4 | pobf::DumpObfuscation::LisR6 | pobf::DumpObfuscation::XorR7);
+}
+
+bool g_firstTimeEncrypt = true;
+void pobf_RealTimeEncrypt_Example()
+{
+    pobf::Encrypt::RealTimeFunctionEncrypt<decltype(&pobf_RealTimeEncrypt_Example)> encrypt(pobf_RealTimeEncrypt_Example, &g_firstTimeEncrypt);
+
+    // your code here..
+    printf("This is encrypted in real time\n");
 }
 
 // IMPORTANT: functions in here must be inlined otherwise the get encrypted by PowerObfuscatorGUI
