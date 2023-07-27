@@ -180,8 +180,13 @@ namespace pobf
             uint32_t headerStart = (uint32_t)&pobf_header;
             uint32_t headerEnd = headerStart + sizeof(pobfHeader) + 3;
 
-            // Replace this key with the one provided by PowerObfuscatorGUI
-            static uint8_t encryptionKey[64] = { 0x24, 0x0A, 0x04, 0x11, 0x06, 0x2A, 0x11, 0x12, 0x01, 0x16, 0x10, 0x15, 0x00, 0x0A, 0x01, 0x24, 0x1B, 0x12, 0x16, 0x06, 0x3B, 0x07, 0x15, 0x01, 0x07, 0x06, 0x12, 0x00, 0x1B, 0x17, 0x23, 0x1B, 0x03, 0x00, 0x01, 0x3B, 0x16, 0x03, 0x06, 0x07, 0x17, 0x04, 0x07, 0x1B, 0x06, 0x35, 0x1C, 0x03, 0x11, 0x17, 0x3C, 0x16, 0x12, 0x10, 0x00, 0x17, 0x15, 0x11, 0x1C, 0x06, 0x24, 0x0A, 0x04, 0x11 };
+            // Replace this key
+            static uint8_t encryptionKey[64] = {
+                0x24, 0x35, 0xE1, 0xB2, 0xA4, 0xCC, 0x49, 0x1A, 0x31, 0x6F, 0x11, 0xFC, 0xF5, 0x19, 0xF0, 0xD5,
+                0xCB, 0x80, 0x0A, 0xFB, 0x98, 0x46, 0x2C, 0xE8, 0x73, 0x4B, 0x40, 0x37, 0x26, 0xC4, 0x23, 0x87,
+                0x2C, 0xF1, 0x7A, 0x47, 0xD8, 0xD0, 0x96, 0x40, 0xE2, 0x8D, 0x66, 0xC9, 0x90, 0xC7, 0xE6, 0x8A,
+                0xBC, 0x46, 0xEA, 0x40, 0x97, 0x27, 0x7C, 0xE2, 0xC9, 0x1F, 0xFE, 0xF1, 0xA7, 0x23, 0xDA, 0x2C
+            };
 
             for (uint32_t i = dataSegmentStart; i < dataSegmentEnd; i++)
             {
@@ -192,9 +197,12 @@ namespace pobf
                 // read 1 byte at a time
                 uint8_t byte = *(uint8_t*)(i);
 
-                //uint8_t unencryptedByte = byte ^ 0x69;
+#if 0
+                uint8_t unencryptedByte = byte ^ 0x69;
+                printf("encryptedByte 0x%X unencryptedByte 0x%02X at 0x%X\n", byte, unencryptedByte, i);
+#else
                 uint8_t unencryptedByte = (byte ^ encryptionKey[(i - dataSegmentStart) % sizeof(encryptionKey)]);
-                //printf("encryptedByte 0x%X unencryptedByte 0x%02X at 0x%X\n", byte, unencryptedByte, i);
+#endif
 
                 _write_process_memory((void*)i, &unencryptedByte, sizeof(uint8_t));
             }
@@ -209,9 +217,12 @@ namespace pobf
                 // read 1 byte at a time
                 uint8_t byte = *(uint8_t*)(i);
 
-                //uint8_t unencryptedByte = byte ^ 0x69;
+#if 0
+                uint8_t unencryptedByte = byte ^ 0x69;
+                printf("encryptedByte 0x%X unencryptedByte 0x%02X at 0x%X\n", byte, unencryptedByte, i);
+#else
                 uint8_t unencryptedByte = (byte ^ encryptionKey[(i - rodataSegmentStart) % sizeof(encryptionKey)]);
-                //printf("encryptedByte 0x%X unencryptedByte 0x%02X at 0x%X\n", byte, unencryptedByte, i);
+#endif
 
                 _write_process_memory((void*)i, &unencryptedByte, sizeof(uint8_t));
             }
@@ -241,9 +252,12 @@ namespace pobf
                 // read 1 byte at a time
                 uint8_t byte = *(uint8_t*)(i);
 
-                //uint8_t unencryptedByte = byte ^ 0x69;
+#if 0
+                uint8_t unencryptedByte = byte ^ 0x69;
+                printf("encryptedByte 0x%X unencryptedByte 0x%02X at 0x%X\n", byte, unencryptedByte, i);
+#else
                 uint8_t unencryptedByte = (byte ^ encryptionKey[(i - textSegmentStart) % sizeof(encryptionKey)]);
-                //printf("encryptedByte 0x%X unencryptedByte 0x%02X at 0x%X\n", byte, unencryptedByte, i);
+#endif
 
                 _write_process_memory((void*)i, &unencryptedByte, sizeof(uint8_t));
             }
@@ -261,9 +275,9 @@ namespace pobf
         */
         #define FUNCTION_MARKER_START_16 0x7C842378, 0x57FF07BC, 0x7CA52B78
         #define FUNCTION_MARKER_START_16_ASM() \
-                    __asm("mr     r4, r4;"                      /* \x7C\x84\x23\x78 */    \
-                          "rlwinm r31, r31, 0, 0x1E, 0x1E;"     /* \x57\xFF\x07\xBC */    \
-                          "mr     r5, r5;");                    /* \x7C\xA5\x2B\x78 */
+                    __asm("mr     %r4, %r4;"                      /* \x7C\x84\x23\x78 */    \
+                          "rlwinm %r31, %r31, 0, 0x1E, 0x1E;"     /* \x57\xFF\x07\xBC */    \
+                          "mr     %r5, %r5;");                    /* \x7C\xA5\x2B\x78 */
 
         /***
         * mr     r5, r5
@@ -274,9 +288,9 @@ namespace pobf
         */
         #define FUNCTION_MARKER_END_16 0x7CA52B78, 0x57FF07BC, 0x7C842378
         #define FUNCTION_MARKER_END_16_ASM() \
-                    __asm("mr     r5, r5;"                      /* \x7C\xA5\x2B\x78 */    \
-                          "rlwinm r31, r31, 0, 0x1E, 0x1E;"     /* \x57\xFF\x07\xBC */    \
-                          "mr     r4, r4;");                    /* \x7C\x84\x23\x78 */
+                    __asm("mr     %r5, %r5;"                      /* \x7C\xA5\x2B\x78 */    \
+                          "rlwinm %r31, %r31, 0, 0x1E, 0x1E;"     /* \x57\xFF\x07\xBC */    \
+                          "mr     %r4, %r4;");                    /* \x7C\x84\x23\x78 */
 
         /***
         * xor r3, r3, r4
@@ -340,8 +354,8 @@ namespace pobf
         */
         #define FUNCTION_MARKER_START_MR_8 0x7C8423787CA52B78
         #define FUNCTION_MARKER_START_MR_8_ASM() \
-                    __asm("mr r4, r4;"       /* \x7C\x84\x23\x78 */             \
-                            "mr r5, r5;");   /* \x7C\xA5\x2B\x78 */
+                    __asm("mr %r4, %r4;"       /* \x7C\x84\x23\x78 */             \
+                            "mr %r5, %r5;");   /* \x7C\xA5\x2B\x78 */
 
         /***
         * mr r5, r5
@@ -351,8 +365,8 @@ namespace pobf
         */
         #define FUNCTION_MARKER_END_MR_8 0x7CA52B787C842378
         #define FUNCTION_MARKER_END_MR_8_ASM() \
-                            __asm("mr r5, r5;"       /* \x7C\xA5\x2B\x78 */     \
-                                    "mr r4, r4;");   /* \x7C\x84\x23\x78 */
+                            __asm("mr %r5, %r5;"       /* \x7C\xA5\x2B\x78 */     \
+                                    "mr %r4, %r4;");   /* \x7C\x84\x23\x78 */
 
         /***
         * mr r4, r4
