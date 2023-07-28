@@ -245,6 +245,7 @@ private slots:
     void on_obfuscateButton_clicked();
     void on_deobfuscateButton_clicked();
     void on_addSegmentsToListButton_clicked();
+    void on_generateRandomEncryptionKeyButton_clicked();
 
 private:
     Ui::PowerObfuscatorClass ui;

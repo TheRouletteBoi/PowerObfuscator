@@ -54,6 +54,17 @@ void PowerObfuscator::openFile(const QString& fileName)
     m_qDataStream.setDevice(&m_qFile);
 }
 
+void PowerObfuscator::on_generateRandomEncryptionKeyButton_clicked()
+{
+    ui.outputTextEdit->append("----- Use this key in app -----");
+    const std::string encryptionKeyString = generateRandomEncryptionKey();
+    ui.outputTextEdit->append(QString::fromStdString(encryptionKeyString));
+
+    ui.outputTextEdit->append("----- Use this key in your sprx code -----");
+    const std::vector<uint8_t> encryptionKeyBytes = hexStringToBytes(encryptionKeyString);
+    printEncryptionKeyForPrx(encryptionKeyBytes);
+}
+
 void PowerObfuscator::on_obfuscateButton_clicked()
 {
     if (!m_doesfileExist)
@@ -395,7 +406,7 @@ bool PowerObfuscator::deobfuscateSegment(const QString& segmentName, uint8_t* by
         }
 
         // Skip pobf_header structure
-        // TODO(Roulette): need a way to find pobf_header without symbols. Use scan for 'P' 'O' 'B' 'F' or scna for POBF_SIGNATURE
+        // TODO(Roulette): need a way to find pobf_header without symbols. Use scan for 'P' 'O' 'B' 'F' or scan for POBF_SIGNATURE
 
 #if 0
         byteArray[i] = (byteArray[i] ^ 0x69); // debug encryption key 
@@ -687,7 +698,6 @@ void PowerObfuscator::saveFileWithPrefix(const QString& filePrefix, uint8_t* byt
 
 void PowerObfuscator::printEncryptionKeyForPrx(const std::vector<uint8_t>& keyBytes)
 {
-    ui.outputTextEdit->append("\n----- Use this key in your sprx code -----");
     std::stringstream ss;
     ss << "static uint8_t encryptionKey[" << keyBytes.size() << "] = {";
 
