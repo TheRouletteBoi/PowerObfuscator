@@ -56,7 +56,7 @@ void PowerObfuscator::openFile(const QString& fileName)
 
 void PowerObfuscator::on_generateRandomEncryptionKeyButton_clicked()
 {
-    ui.outputTextEdit->append("----- Use this key in app -----");
+    ui.outputTextEdit->append("\n----- Use this key in app -----");
     const std::string encryptionKeyString = generateRandomEncryptionKey();
     ui.outputTextEdit->append(QString::fromStdString(encryptionKeyString));
 
