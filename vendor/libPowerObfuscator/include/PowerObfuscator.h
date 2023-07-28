@@ -307,8 +307,8 @@ namespace pobf
         * xor r3, r3, r5
         * xor r3, r3, r5
         */
-        #define FUNCTION_MARKER_END_XOR_INDIVIDUAL_4_2 0x7C632A78
         #define FUNCTION_MARKER_END_XOR_INDIVIDUAL_4_1 0x7C632A78 
+        #define FUNCTION_MARKER_END_XOR_INDIVIDUAL_4_2 0x7C632A78
         #define FUNCTION_MARKER_END_XOR_8_BYTES "\x7C\x63\x2A\x78\x7C\x63\x2A\x78"
         #define FUNCTION_MARKER_END_XOR_8_ASM() \
                     __asm("xor %r3, %r3, %r5;"       /* \x7C\x63\x2A\x78 */     \
@@ -390,7 +390,7 @@ namespace pobf
 
         // EG:
         // bool g_mainFirstTimeEncrypt = true;
-        // RealTimeFunctionEncrypt<decltype(&main)> encrypt(main, g_mainFirstTimeEncrypt);
+        // RealTimeFunctionEncrypt<decltype(&main)> encrypt(main, &g_mainFirstTimeEncrypt);
         template <class T>
         class RealTimeFunctionEncrypt
         {
@@ -466,12 +466,12 @@ namespace pobf
                     uint32_t address = m_FunctionAddress + i;
                     if (memcmp((void*)address, markerStartByte, s_MarkerSize) == 0)
                     {
-                        uint32_t m_EncryptionStart2 = address + s_MarkerSize;
+                        m_EncryptionStart = address + s_MarkerSize;
                     }
 
                     if (memcmp((void*)address, markerEndByte, s_MarkerSize) == 0)
                     {
-                        uint32_t m_EncryptionEnd2 = address;
+                        m_EncryptionEnd = address;
                         break;
                     }
                 }
@@ -541,6 +541,32 @@ namespace pobf
 
             static const unsigned s_MaxFunctionScanSize = 0x1000; /* Only scan 0x1000 bytes of a function. If you have more than that, I don't support you. */
             static const unsigned s_MarkerSize = 8; /* Size of the encryption marker in bytes */
+        };
+
+        class RealTimeUint32Encrypt
+        {
+        public:
+            void MixSeed()
+            {
+
+            }
+
+            void OnUpdate()
+            {
+
+            }
+
+        private:
+            uint32_t m_Value;
+            uint32_t m_DynamicValueSwap;
+            uint32_t m_DynamicValueReswap;
+            uint32_t m_CompileTimeSeed;
+            uint32_t m_CompileTimeRandom;
+            uint32_t m_LicenseKeyJoaatHash;
+            uint32_t m_MacAddressBufferPointer;
+            uint32_t m_RandValue;
+            uint32_t m_RecvBufferPointer;
+            uint32_t m_Time;
         };
     }
 
