@@ -181,12 +181,71 @@ namespace pobf
             uint32_t headerEnd = headerStart + sizeof(pobfHeader) + 3;
 
             // Replace this key
-            static uint8_t encryptionKey[64] = {
-                0x24, 0x35, 0xE1, 0xB2, 0xA4, 0xCC, 0x49, 0x1A, 0x31, 0x6F, 0x11, 0xFC, 0xF5, 0x19, 0xF0, 0xD5,
-                0xCB, 0x80, 0x0A, 0xFB, 0x98, 0x46, 0x2C, 0xE8, 0x73, 0x4B, 0x40, 0x37, 0x26, 0xC4, 0x23, 0x87,
-                0x2C, 0xF1, 0x7A, 0x47, 0xD8, 0xD0, 0x96, 0x40, 0xE2, 0x8D, 0x66, 0xC9, 0x90, 0xC7, 0xE6, 0x8A,
-                0xBC, 0x46, 0xEA, 0x40, 0x97, 0x27, 0x7C, 0xE2, 0xC9, 0x1F, 0xFE, 0xF1, 0xA7, 0x23, 0xDA, 0x2C
-            };
+            static uint8_t encryptionKey[64];
+            encryptionKey[0] = 0x5D;
+            encryptionKey[1] = 0xF8;
+            encryptionKey[2] = 0xB3;
+            encryptionKey[3] = 0x7A;
+            encryptionKey[4] = 0xDF;
+            encryptionKey[5] = 0x47;
+            encryptionKey[6] = 0x3A;
+            encryptionKey[7] = 0x00;
+            encryptionKey[8] = 0x62;
+            encryptionKey[9] = 0x10;
+            encryptionKey[10] = 0xF4;
+            encryptionKey[11] = 0xC6;
+            encryptionKey[12] = 0x6B;
+            encryptionKey[13] = 0x4C;
+            encryptionKey[14] = 0x8E;
+            encryptionKey[15] = 0xCA;
+            encryptionKey[16] = 0x14;
+            encryptionKey[17] = 0x81;
+            encryptionKey[18] = 0x92;
+            encryptionKey[19] = 0x81;
+            encryptionKey[20] = 0x35;
+            encryptionKey[21] = 0x60;
+            encryptionKey[22] = 0xF9;
+            encryptionKey[23] = 0x50;
+            encryptionKey[24] = 0xF1;
+            encryptionKey[25] = 0x80;
+            encryptionKey[26] = 0x4E;
+            encryptionKey[27] = 0xF9;
+            encryptionKey[28] = 0x2C;
+            encryptionKey[29] = 0x10;
+            encryptionKey[30] = 0xEF;
+            encryptionKey[31] = 0xDE;
+            encryptionKey[32] = 0x0E;
+            encryptionKey[33] = 0xEE;
+            encryptionKey[34] = 0x63;
+            encryptionKey[35] = 0xD6;
+            encryptionKey[36] = 0x30;
+            encryptionKey[37] = 0x10;
+            encryptionKey[38] = 0x08;
+            encryptionKey[39] = 0x8D;
+            encryptionKey[40] = 0x70;
+            encryptionKey[41] = 0x5B;
+            encryptionKey[42] = 0xCA;
+            encryptionKey[43] = 0x54;
+            encryptionKey[44] = 0x9F;
+            encryptionKey[45] = 0xC3;
+            encryptionKey[46] = 0x83;
+            encryptionKey[47] = 0x83;
+            encryptionKey[48] = 0xEB;
+            encryptionKey[49] = 0x2F;
+            encryptionKey[50] = 0x51;
+            encryptionKey[51] = 0x10;
+            encryptionKey[52] = 0xBE;
+            encryptionKey[53] = 0xE4;
+            encryptionKey[54] = 0xF1;
+            encryptionKey[55] = 0xD8;
+            encryptionKey[56] = 0x8C;
+            encryptionKey[57] = 0xD7;
+            encryptionKey[58] = 0xF1;
+            encryptionKey[59] = 0xD4;
+            encryptionKey[60] = 0x71;
+            encryptionKey[61] = 0x9E;
+            encryptionKey[62] = 0xBD;
+            encryptionKey[63] = 0xB6;
 
             for (uint32_t i = dataSegmentStart; i < dataSegmentEnd; i++)
             {
