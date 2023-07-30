@@ -698,30 +698,13 @@ void PowerObfuscator::saveFileWithPrefix(const QString& filePrefix, uint8_t* byt
 
 void PowerObfuscator::printEncryptionKeyForPrx(const std::vector<uint8_t>& keyBytes)
 {
-    std::stringstream ss;
-    ss << "static uint8_t encryptionKey[" << keyBytes.size() << "] = {";
+    ui.outputTextEdit->append("static uint8_t encryptionKey[" + QString::number(keyBytes.size()) + "];");
 
-    auto byteView = keyBytes | std::views::transform([](uint8_t byte) {
-        return std::format(" 0x{:02X}", byte);
-    });
-
-    bool firstByte = true;
-    for (const auto& byte : byteView) 
+    for (size_t i = 0; i < keyBytes.size(); i++)
     {
-        if (!firstByte) 
-        {
-            ss << ",";
-        }
-        else 
-        {
-            firstByte = false;
-        }
-        ss << byte;
+        std::string inlineByte =  std::format("encryptionKey[{}] = 0x{:02X};", i, keyBytes[i]);
+        ui.outputTextEdit->append(QString::fromStdString(inlineByte));
     }
-
-    ss << " };\n";
-
-    ui.outputTextEdit->append(QString::fromStdString(ss.str()));
 }
 
 void PowerObfuscator::getElfInfo(const std::string& fileName)
