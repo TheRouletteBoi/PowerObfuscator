@@ -49,7 +49,7 @@ PowerObfuscator obfuscate your PS3 .PRX/.SPRX plugins
 
 2. In your prx go to definition of pobf::Segment::DecryptSegments(main); and replace the encryption key with your own.
 
-3. Now load your prx in app and enter your encryption key. Default encryption key is: `2435E1B2A4CC491A316F11FCF519F0D5CB800AFB98462CE8734B403726C423872CF17A47D8D09640E28D66C990C7E68ABC46EA4097277CE2C91FFEF1A723DA2C`
+3. Now load your prx in app and enter your encryption key. Default encryption key is: `5DF8B37ADF473A006210F4C66B4C8ECA148192813560F950F1804EF92C10EFDE0EEE63D63010088D705BCA549FC38383EB2F5110BEE4F1D88CD7F1D4719EBDB6`
 
 ![App Example](https://github.com/TheRouletteBoi/PowerObfuscator/blob/master/Assets/Screenshots/example_app.png)
 
