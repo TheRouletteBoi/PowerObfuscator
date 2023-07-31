@@ -114,10 +114,10 @@ struct pobfHeader
 #define POBF_MAGIC 'P', 'O', 'B', 'F'
 #define POBF_SIGNATURE littleToBigEndian(0xAABBCCDD), littleToBigEndian(0x12345678), littleToBigEndian(0xEEFFEEFF)
 // these values will be replaced by fixHeader()
-#define POBF_TEXT_SEGMENT_DUMMY_VALUES littleToBigEndian(0xDEADBEEF), littleToBigEndian(0x0BADCAFE), littleToBigEndian(0x00DDBA11) 
-#define POBF_DATA_SEGMENT_DUMMY_VALUES littleToBigEndian(0x5CA1AB1E), littleToBigEndian(0x0DEC0DED), littleToBigEndian(0x00EFFEC7) 
-#define POBF_PLACEHOLDER_DUMMY_VALUES1 littleToBigEndian(0x5E1EC7ED), littleToBigEndian(0x05EEDBED), littleToBigEndian(0x05CABB1E) 
-#define POBF_PLACEHOLDER_DUMMY_VALUES2 littleToBigEndian(0x00FF5E75), littleToBigEndian(0x0001ABE1), littleToBigEndian(0x000F100D) 
+#define POBF_TEXT_SEGMENT_DUMMY_VALUES      littleToBigEndian(0xDEADBEEF), littleToBigEndian(0x0BADCAFE), littleToBigEndian(0x00DDBA11) 
+#define POBF_DATA_SEGMENT_DUMMY_VALUES      littleToBigEndian(0x5CA1AB1E), littleToBigEndian(0x0DEC0DED), littleToBigEndian(0x00EFFEC7) 
+#define POBF_RODATA_SEGMENT_DUMMY_VALUES    littleToBigEndian(0x5E1EC7ED), littleToBigEndian(0x05EEDBED), littleToBigEndian(0x05CABB1E) 
+#define POBF_PLACEHOLDER_DUMMY_VALUES       littleToBigEndian(0x00FF5E75), littleToBigEndian(0x0001ABE1), littleToBigEndian(0x000F100D) 
 
 
 

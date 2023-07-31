@@ -550,8 +550,8 @@ bool PowerObfuscator::fixHeader(uint8_t* byteArray, const QString& segmentNameIn
         POBF_SIGNATURE,
         POBF_TEXT_SEGMENT_DUMMY_VALUES,
         POBF_DATA_SEGMENT_DUMMY_VALUES,
-        POBF_PLACEHOLDER_DUMMY_VALUES1,
-        POBF_PLACEHOLDER_DUMMY_VALUES2
+        POBF_RODATA_SEGMENT_DUMMY_VALUES,
+        POBF_PLACEHOLDER_DUMMY_VALUES
     };
 
     header.textSegmentStart = littleToBigEndian(textSegmentAddress);
