@@ -699,12 +699,31 @@ void PowerObfuscator::saveFileWithPrefix(const QString& filePrefix, uint8_t* byt
 void PowerObfuscator::printEncryptionKeyForPrx(const std::vector<uint8_t>& keyBytes)
 {
     ui.outputTextEdit->append("static uint8_t encryptionKey[" + QString::number(keyBytes.size()) + "];");
+#if 0
+    // create int array from 0 to keyBytes.size()
+    std::vector<int> indices(keyBytes.size());
+    for (int i = 0; i < keyBytes.size(); i++)
+        indices[i] = i;
 
-    for (size_t i = 0; i < keyBytes.size(); i++)
+    // shuffle the indices array
+    std::random_device randomDevice;
+    std::mt19937 randomEngine(randomDevice());
+    std::ranges::shuffle(indices, randomEngine);
+
+    // show the shuffled encryption key
+    for (int i = 0; i < keyBytes.size(); i++)
     {
-        std::string inlineByte =  std::format("encryptionKey[{}] = 0x{:02X};", i, keyBytes[i]);
+        std::string inlineByte = std::format("encryptionKey[{}] = 0x{:02X};", indices[i], keyBytes[indices[i]]);
         ui.outputTextEdit->append(QString::fromStdString(inlineByte));
     }
+#else
+    // show the encryption key
+    for (size_t i = 0; i < keyBytes.size(); i++)
+    {
+        std::string inlineByte = std::format("encryptionKey[{}] = 0x{:02X};", i, keyBytes[i]);
+        ui.outputTextEdit->append(QString::fromStdString(inlineByte));
+    }
+#endif
 }
 
 void PowerObfuscator::getElfInfo(const std::string& fileName)
