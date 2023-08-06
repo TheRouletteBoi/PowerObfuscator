@@ -303,10 +303,10 @@ namespace pobf
 #if 0
                 if (SkipInstructionsWithStringOrPointerReference(textSegmentStart, textSegmentEnd, mainStart, mainEnd, i))
                     continue;
-#endif
-
+#else
                 if (SkipLast2Bytes(i))
                     continue;
+#endif
 
                 // read 1 byte at a time
                 uint8_t byte = *(uint8_t*)(i);

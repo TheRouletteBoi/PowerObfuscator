@@ -226,10 +226,11 @@ bool PowerObfuscator::obfuscateSegment(const QString& segmentName, uint8_t* byte
             // Skip instructions with string references 
             if (skipInstructionsWithStringOrPointerReference(byteArray, segmentAddress, segmentAddressEnd, mainInfo, i))
                 continue;
-#endif
+#else
 
             if (skipLast2Bytes(i))
                 continue;
+#endif
         }
 
         // Skip pobf_header structure
@@ -399,14 +400,15 @@ bool PowerObfuscator::deobfuscateSegment(const QString& segmentName, uint8_t* by
             // Skip instructions with string references 
             if (skipInstructionsWithStringOrPointerReference(byteArray, segmentAddressStart, segmentAddressEnd, mainInfo, i))
                 continue;
-#endif
+#else
 
             if (skipLast2Bytes(i))
                 continue;
+#endif
         }
 
         // Skip pobf_header structure
-        // TODO(Roulette): need a way to find pobf_header without symbols. Use scan for 'P' 'O' 'B' 'F' or scan for POBF_SIGNATURE
+        // TODO(Roulette): need a way to find pobf_header without symbols. Try to scan for 'P' 'O' 'B' 'F' or scan POBF_SIGNATURE bytes
 
 #if 0
         byteArray[i] = (byteArray[i] ^ 0x69); // debug encryption key 
