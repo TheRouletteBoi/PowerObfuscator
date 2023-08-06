@@ -173,6 +173,23 @@ void pobf_RealTimeEncrypt_Example()
     printf("This is encrypted in real time\n");
 }
 
+bool g_firstTimeAuthEncrypt = true;
+void pobf_RealTimeEncrypt2_Example()
+{
+    // last bool is set to true to delete the function after it's been used once, Once deleted it can NOT be reused.
+    pobf::Encrypt::RealTimeFunctionEncrypt<decltype(&pobf_RealTimeEncrypt2_Example)> encrypt(pobf_RealTimeEncrypt2_Example, &g_firstTimeAuthEncrypt, true);
+
+
+    // Your auth code 
+    printf("Authentication example...");
+
+    printf("socket()...");
+
+    printf("send()...");
+
+    printf("recv()...");
+}
+
 // IMPORTANT: functions in here must be inlined otherwise the get encrypted by PowerObfuscatorGUI
 // TODO(Roulette): either keep all functions inlined in main() or modify PowerObfuscatorGUI to skip symbols with 'pobf_' to allow no inline functions
 extern "C" int PowerObfuscatorSPRXMain(int argc, char* argv[])
