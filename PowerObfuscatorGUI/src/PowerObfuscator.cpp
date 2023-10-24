@@ -751,7 +751,7 @@ void PowerObfuscator::getElfInfo(const std::string& fileName)
 
     ui.outputTextEdit->append("----- ELF Information -----");
 
-    if (result.contains("ERROR: "))
+    if (result.empty() || result.contains("ERROR: "))
     {
         ui.outputTextEdit->append(QString::fromStdString(result));
         return;
@@ -861,7 +861,7 @@ void PowerObfuscator::getSectionHeaders(const std::string& fileName)
 
     ui.outputTextEdit->append("----- Section Headers -----");
 
-    if (result.contains("ERROR: "))
+    if (result.empty() || result.contains("ERROR: "))
     {
         ui.outputTextEdit->append(QString::fromStdString(result));
         return;
@@ -909,7 +909,7 @@ void PowerObfuscator::getSizeStatistics(const std::string& fileName)
 
     ui.outputTextEdit->append("----- Segment Sizes -----");
 
-    if (result.contains("ERROR: "))
+    if (result.empty() || result.contains("ERROR: "))
     {
         ui.outputTextEdit->append(QString::fromStdString(result));
         return;
@@ -1009,7 +1009,7 @@ void PowerObfuscator::getSymbolInfo(const std::string& fileName)
 
     ui.outputTextEdit->append("----- Symbol Information -----");
 
-    if (result.contains("ERROR: ") || result.contains("WARNING: "))
+    if (result.empty() || result.contains("ERROR: ") || result.contains("WARNING: "))
     {
         ui.outputTextEdit->append(QString::fromStdString(result));
         return;
@@ -1065,7 +1065,7 @@ void PowerObfuscator::getSegmentInfo(const std::string& fileName, const std::str
 
     ui.outputTextEdit->append("----- Segment Info -----");
 
-    if (result.contains("ERROR: ") || result.contains("WARNING: "))
+    if (result.empty() || result.contains("ERROR: ") || result.contains("WARNING: "))
     {
         ui.outputTextEdit->append(QString::fromStdString(result));
         return;
@@ -1131,7 +1131,7 @@ void PowerObfuscator::stripSymbolsPrx(const std::string& fileName)
 
     ui.outputTextEdit->append("Stripping symbols");
 
-    if (result.contains("ERROR: ") || result.contains("WARNING: "))
+    if (result.empty() || result.contains("ERROR: ") || result.contains("WARNING: "))
     {
         ui.outputTextEdit->append(QString::fromStdString(result));
         return;
@@ -1141,12 +1141,8 @@ void PowerObfuscator::stripSymbolsPrx(const std::string& fileName)
 void PowerObfuscator::signPrx(const std::string& inFileName, const std::string& outFileName)
 {
     std::string command = "scetool.exe -0 SELF -1 TRUE -s FALSE -2 0A -3 1070000052000001 -4 01000002 -5 APP -6 0003004000000000 -A 0001000000000000 --self-ctrl-flags 4000000000000000000000000000000000000000000000000000000000000002 -e \"" + inFileName + "\"" + " \"" + outFileName + "\"";
-    //std::string command = "powershell.exe -Command \"./scetool.exe -0 SELF -1 TRUE -s FALSE -2 0A -3 1070000052000001 -4 01000002 -5 APP -6 0003004000000000 -A 0001000000000000 --self-ctrl-flags 4000000000000000000000000000000000000000000000000000000000000002 -e \"" + inFileName + "\"" + " \"" + outFileName + "\"";
 
     systemResult(command.c_str());
-    //systemWin32(command.c_str());
-
-    qDebug() << command;
 
     ui.outputTextEdit->append("Signing prx");
 }
@@ -1164,31 +1160,6 @@ std::string PowerObfuscator::systemResult(const char* cmd)
         result += buffer.data();
 
     return result;
-}
-
-void PowerObfuscator::systemWin32(const char* cmd)
-{
-    // CreateProcess variables
-    STARTUPINFOA si;
-    PROCESS_INFORMATION pi;
-
-    // Initialize the STARTUPINFO structure
-    ZeroMemory(&si, sizeof(si));
-    si.cb = sizeof(si);
-
-    // Initialize the PROCESS_INFORMATION structure
-    ZeroMemory(&pi, sizeof(pi));
-
-    // Create the process with the CREATE_NO_WINDOW flag
-    if (CreateProcessA(NULL, (LPSTR)cmd, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
-    {
-        // Wait for the process to complete (optional)
-        WaitForSingleObject(pi.hProcess, INFINITE);
-
-        // Close process and thread handles
-        CloseHandle(pi.hProcess);
-        CloseHandle(pi.hThread);
-    }
 }
 
 std::string PowerObfuscator::trim(std::string_view str)

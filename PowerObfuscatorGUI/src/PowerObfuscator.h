@@ -193,13 +193,6 @@ public:
     std::string systemResult(const char* cmd);
 
     /***
-    * @brief calls a terminal command using WIN32 API
-    *
-    * HACK: for some reason when calling SecureTool.exe using system() or _popen() seems to fail so this is a temporary fix
-    */
-    void systemWin32(const char* cmd);
-
-    /***
     * @brief removes white space from text
     */
     std::string trim(std::string_view str);
